@@ -1,5 +1,5 @@
-package com.financeai.api.dto;
-//lkj
+package com.alura.finance_ai.dto;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 
