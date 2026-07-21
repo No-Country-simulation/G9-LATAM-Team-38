@@ -1,4 +1,4 @@
 package com.financeai.api.dto;
 
-public class TransaccionDTO {
+public record TransaccionDTO() {
 }
