@@ -1,5 +1,3 @@
-I'll fetch the repository structure and key files from the ds-stage branch to create a comprehensive README focused on the Data Science aspects.Let me explore the repository structure on the ds-stage branch:Perfect! I have the project context. Now I'll generate a comprehensive yet concise README for the ds-stage branch focused on Data Science aspects.
-
 ```markdown name=README.md
 # FinanceAI — G9 LATAM Team 38
 
