@@ -151,5 +151,5 @@ MIT — Ver LICENSE en la raíz del repositorio
 
 ---
 
-**Última actualización**: 2024  
+**Última actualización**: 20 de junio, 2026.  
 **Equipo**: No Country Simulation - G9 LATAM Team 38
