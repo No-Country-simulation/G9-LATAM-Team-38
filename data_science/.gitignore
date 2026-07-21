@@ -1,0 +1,34 @@
+# Data
+data/raw/*
+data/processed/*.csv
+!data/samples/
+!data/samples/**/*
+
+# Models (si son < 100 MB, sino usar Git LFS)
+# models/*.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
