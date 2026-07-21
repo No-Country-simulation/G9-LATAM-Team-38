@@ -1,21 +1,20 @@
-```markdown name=README.md
 # FinanceAI — G9 LATAM Team 38
 
 **Oracle ONE G9 · No-Country Simulation**
 
-Un sistema integral de análisis y clasificación de transacciones financieras que combina conjuntos de datos reales y sintéticos con modelos de aprendizaje automático para generar insights personales de finanzas.
+Un sistema integral de análisis y clasificación de transacciones financieras que combina conjuntos de datos reales y sintéticos con modelos de aprendizaje automático para generar insights personalizados.
 
 ---
 
-## 🎯 Descripción General de Ciencia de Datos
+## 🎯 Descripción General
 
-El módulo DS proporciona perfilado financiero inteligente y clasificación de gastos a través de:
+El módulo de Data Science proporciona perfilado financiero inteligente y clasificación de gastos mediante:
 
-- **Dataset Híbrido**: 500 usuarios combinando datos reales de Kaggle (Capa 1) + patrones financieros sintéticos (Capa 2)
-- **Ingeniería de Características**: Análisis de descripciones de transacciones basado en NLP y cálculo de ratios financieros
-- **Modelo de Clasificación**: Clasificador de aprendizaje automático para categorización de gastos
-- **Sistema de Puntuación**: Generación de perfil financiero basado en ingresos, deuda y comportamiento de ahorro
-- **Integración API**: Endpoint de inferencia RESTful para predicciones en tiempo real del Backend
+- **Dataset Híbrido**: 500 usuarios combinando datos reales de Kaggle + patrones financieros sintéticos
+- **Ingeniería de Características**: Análisis NLP de descripciones y cálculo de ratios financieros
+- **Modelo de Clasificación**: Clasificador de machine learning para categorización automática de gastos
+- **Sistema de Puntuación**: Generación de perfil financiero basado en ingresos, deuda y ahorro
+- **API REST**: Endpoint de inferencia para predicciones en tiempo real
 
 ---
 
@@ -23,74 +22,72 @@ El módulo DS proporciona perfilado financiero inteligente y clasificación de g
 
 ```
 data_science/
-
+│
 ├── data/
-│   │
-│   ├── raw/                          # Datasets reales (Kaggle) — .gitignore
-│   │
-│   ├── processed/                    # Salida del dataset híbrido
-│   │
-│   └── samples/                      # JSON de muestra para pruebas del Backend
-
+│   ├── raw/                               # Datasets reales (Kaggle) — .gitignore
+│   ├── processed/                         # Salida del dataset híbrido
+│   └── samples/                           # JSON de muestra para pruebas del Backend
+│
 ├── notebooks/
-│   │
-│   ├── 01_eda_dataset_hibrido.ipynb      # Análisis exploratorio de datos
-│   │
-│   └── 02_feature_engineering_modelo.ipynb # Entrenamiento del modelo y características
-
+│   ├── 01_eda_dataset_hibrido.ipynb       # Análisis exploratorio de datos
+│   └── 02_feature_engineering_modelo.ipynb # Entrenamiento y características
+│
 ├── src/
-│   │
-│   ├── build_dataset_financeai.py        # Construcción del dataset híbrido
-│   │
-│   ├── scoring.py                        # Puntuación del perfil financiero
-│   │
-│   ├── features.py                       # Extracción de características
-│   │
-│   ├── train_model.py                    # Pipeline de entrenamiento del modelo
-│   │
-│   └── predict.py                        # Función de inferencia
+│   ├── build_dataset_financeai.py         # Construcción del dataset híbrido
+│   ├── scoring.py                         # Puntuación del perfil financiero
+│   ├── features.py                        # Extracción de características
+│   ├── train_model.py                     # Pipeline de entrenamiento
+│   └── predict.py                         # Función de inferencia
 │
 ├── models/
-│   │
-│   └── clasificador_gastos.pkl           # Clasificador de gastos entrenado
+│   └── clasificador_gastos.pkl            # Clasificador entrenado
 │
 ├── docs/
-│   │
-│   ├── metodologia_dataset_hibrido.md    # Estrategia del dataset
-│   │
-│   ├── contrato_api.md                   # Esquema de API (solicitud/respuesta)
-│   │
-│   └── estado_actual.md                  # Checklist de progreso
+│   ├── metodologia_dataset_hibrido.md     # Estrategia del dataset
+│   ├── contrato_api.md                    # Esquema de API (request/response)
+│   └── estado_actual.md                   # Checklist de progreso
 │
 ├── requirements.txt
-│
-└── runtime.txt
+├── runtime.txt
+└── README.md
 ```
 
 ---
 
 ## 🚀 Inicio Rápido
 
-### 1. Configurar Entorno
+### 1️⃣ Configurar Entorno
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
 pip install -r requirements.txt
 ```
 
-### 2. Construir Dataset Híbrido
+### 2️⃣ Construir Dataset Híbrido
+
 ```bash
+# Configurar credenciales de Kaggle primero:
+# - Descargar token desde https://www.kaggle.com/account
+# - Guardar en ~/.kaggle/kaggle.json
+
 python src/build_dataset_financeai.py
-# Requiere token de API de Kaggle (~/.kaggle/kaggle.json)
 ```
 
-### 3. Entrenar Modelo
-Abre y ejecuta `notebooks/02_feature_engineering_modelo.ipynb` para:
-- Extracción de características de descripciones de transacciones
-- Entrenamiento del clasificador y sintonización de hiperparámetros
-- Serialización del modelo a `models/clasificador_gastos.pkl`
+**Salida**: `data/processed/financeai_dataset_hibrido.csv` (500 usuarios)
 
-### 4. Predecir (Integración con Backend)
+### 3️⃣ Entrenar Modelo
+
+Abrir y ejecutar `notebooks/02_feature_engineering_modelo.ipynb`:
+- Extracción de características de descripciones
+- Entrenamiento del clasificador
+- Sintonización de hiperparámetros
+- Serialización a `models/clasificador_gastos.pkl`
+
+### 4️⃣ Predecir (Integración Backend)
+
 ```python
 from src.predict import predict_gastos
 
@@ -108,37 +105,42 @@ result = predict_gastos(
 
 ---
 
-## 📊 Características Clave
+## 📊 Componentes Clave
 
-| Componente | Propósito |
-|-----------|---------|
-| **Dataset Híbrido** | 500 perfiles de usuarios reales + sintéticos para entrenamiento robusto del modelo |
+| Componente | Descripción |
+|-----------|-----------|
+| **Dataset Híbrido** | 500 perfiles reales + sintéticos para entrenamiento robusto |
 | **Características NLP** | Análisis y categorización de descripciones de transacciones |
 | **Ratios Financieros** | Relación ingresos-deuda, frecuencia de ahorro, patrones de gasto |
-| **Clasificación** | Categorización multiclase de gastos (Alimentos, Transporte, etc.) |
-| **API de Puntuación** | Solicitud/respuesta JSON para integración con Backend |
+| **Clasificador** | Categorización multiclase de gastos (Alimentos, Transporte, etc.) |
+| **API REST** | Endpoint JSON para integración con Backend |
 
 ---
 
-## 📚 Documentación
+## 📚 Documentación Detallada
 
-- **[Metodología del Dataset](docs/metodologia_dataset_hibrido.md)** — Por qué enfoque híbrido + estrategia de capas de datos
-- **[Contrato de API](docs/contrato_api.md)** — Esquema JSON completo para endpoint `/analisis-financiero`
-- **[Estado del Progreso](docs/estado_actual.md)** — Checklist de tareas y seguimiento de completitud
+- **[Metodología del Dataset](docs/metodologia_dataset_hibrido.md)** — Estrategia híbrida de dos capas de datos
+- **[Contrato de API](docs/contrato_api.md)** — Schema completo para `/analisis-financiero`
+- **[Estado del Progreso](docs/estado_actual.md)** — Checklist de tareas y completitud
 
 ---
 
-## 🔧 Notas Técnicas
+## 🔧 Configuración Técnica
 
-**Git LFS** (si el modelo > 100MB):
+### Git LFS (si archivo .pkl > 100MB)
+
 ```bash
-git lfs install && git lfs track "*.pkl"
+git lfs install
+git lfs track "*.pkl"
+git add .gitattributes
+git add models/
 ```
 
-**Variables de Entorno** (CI/CD):
+### Variables de Entorno (CI/CD)
+
 ```bash
-export KAGGLE_USERNAME=<tu_usuario>
-export KAGGLE_KEY=<tu_clave_api>
+export KAGGLE_USERNAME=tu_usuario
+export KAGGLE_KEY=tu_api_key
 ```
 
 ---
@@ -146,14 +148,8 @@ export KAGGLE_KEY=<tu_clave_api>
 ## 📝 Licencia
 
 MIT — Ver LICENSE en la raíz del repositorio
-```
 
-Este README traducido incluye:
-- ✅ Descripción general del proyecto enfocada en DS
-- ✅ Estructura de directorios clara
-- ✅ Guía de inicio rápido para flujos clave
-- ✅ Tabla resumen de características
-- ✅ Enlaces a documentación detallada
-- ✅ Notas de configuración técnica
-- ✅ Ejemplos de integración con Backend
-- ✅ **Completamente en español**
+---
+
+**Última actualización**: 2024  
+**Equipo**: No Country Simulation - G9 LATAM Team 38
