@@ -23,14 +23,23 @@ El módulo DS proporciona perfilado financiero inteligente y clasificación de g
 
 ```
 data_science/
+
 ├── data/
+
 │   ├── raw/                          # Datasets reales (Kaggle) — .gitignore
+
 │   ├── processed/                    # Salida del dataset híbrido
+
 │   └── samples/                      # JSON de muestra para pruebas del Backend
+
 ├── notebooks/
+
 │   ├── 01_eda_dataset_hibrido.ipynb      # Análisis exploratorio de datos
+
 │   └── 02_feature_engineering_modelo.ipynb # Entrenamiento del modelo y características
+
 ├── src/
+
 │   ├── build_dataset_financeai.py        # Construcción del dataset híbrido
 │   ├── scoring.py                        # Puntuación del perfil financiero
 │   ├── features.py                       # Extracción de características
