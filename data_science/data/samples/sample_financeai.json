@@ -1,0 +1,212 @@
+[
+  {
+    "usuario_id": "user_0000",
+    "ingreso_mensual": 5427.58,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 539,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 0.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 0.0,
+    "ratio_gasto_ingreso": 0.0,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0001",
+    "ingreso_mensual": 5946.28,
+    "nivel_endeudamiento": 1.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 575,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 1.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 1.0,
+    "ratio_gasto_ingreso": 0.00016817236995230633,
+    "perfil_financiero": "En observación",
+    "recomendaciones": ["Priorizar el pago de deuda antes de nuevos compromisos financieros"]
+  },
+  {
+    "usuario_id": "user_0002",
+    "ingreso_mensual": 3968.19,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 741,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 3.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 3.0,
+    "ratio_gasto_ingreso": 0.000756012186916453,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0003",
+    "ingreso_mensual": 537.96,
+    "nivel_endeudamiento": 1.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 779,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 2.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 2.0,
+    "ratio_gasto_ingreso": 0.00371774853148933,
+    "perfil_financiero": "En observación",
+    "recomendaciones": ["Priorizar el pago de deuda antes de nuevos compromisos financieros"]
+  },
+  {
+    "usuario_id": "user_0004",
+    "ingreso_mensual": 4952.41,
+    "nivel_endeudamiento": 0.38,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 592,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 2.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 32.0
+    },
+    "gasto_total": 34.0,
+    "ratio_gasto_ingreso": 0.0068653443474995,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Priorizar el pago de deuda antes de nuevos compromisos financieros"]
+  },
+  {
+    "usuario_id": "user_0005",
+    "ingreso_mensual": 3724.97,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 697,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 3.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 3.0,
+    "ratio_gasto_ingreso": 0.0008053756137633324,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0006",
+    "ingreso_mensual": 3608.69,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 766,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 0.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 0.0,
+    "ratio_gasto_ingreso": 0.0,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0007",
+    "ingreso_mensual": 7755.17,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 531,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 0.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 0.0,
+    "ratio_gasto_ingreso": 0.0,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0008",
+    "ingreso_mensual": 5758.91,
+    "nivel_endeudamiento": 0.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 465,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 5.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 11.0
+    },
+    "gasto_total": 16.0,
+    "ratio_gasto_ingreso": 0.0027783035331338745,
+    "perfil_financiero": "Saludable",
+    "recomendaciones": ["Mantener los hábitos financieros actuales"]
+  },
+  {
+    "usuario_id": "user_0009",
+    "ingreso_mensual": 452.72,
+    "nivel_endeudamiento": 1.0,
+    "frecuencia_ahorro": "Alta",
+    "score_crediticio": 566,
+    "resumen_gastos": {
+      "Alimentación": 0.0,
+      "Transporte": 0.0,
+      "Salud": 0.0,
+      "Vivienda": 0.0,
+      "Educación": 0.0,
+      "Ocio": 0.0,
+      "Servicios": 0.0,
+      "Otros": 0.0
+    },
+    "gasto_total": 0.0,
+    "ratio_gasto_ingreso": 0.0,
+    "perfil_financiero": "En observación",
+    "recomendaciones": ["Priorizar el pago de deuda antes de nuevos compromisos financieros"]
+  }
+]
