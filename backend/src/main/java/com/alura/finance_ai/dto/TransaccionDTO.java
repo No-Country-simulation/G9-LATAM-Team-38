@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 
 public record TransaccionDTO(
         @NotBlank String descripcion,
+        @NotBlank String categoria,
         @Positive Double valor
 ) {
 }
