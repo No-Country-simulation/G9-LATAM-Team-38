@@ -1,0 +1,43 @@
+networks:
+  financeai-network:
+    driver: bridge
+
+services:
+
+  # Microservicio Python (FastAPI) — Modelo 1 + Modelo 2, puerto interno 8000
+  data-science:
+    build:
+      context: ./data_science
+      dockerfile: Dockerfile
+    container_name: financeai-data-science
+    env_file:
+      - .env
+    networks:
+      - financeai-network
+    # No se publica al host: solo Backend lo consume dentro de la red interna de Docker
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # Backend Java/Spring Boot — expone la API pública en el puerto 8080
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: financeai-backend
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    networks:
+      - financeai-network
+    depends_on:
+      data-science:
+        condition: service_healthy
+    restart: unless-stopped
