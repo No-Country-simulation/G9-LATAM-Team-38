@@ -17,8 +17,8 @@ public class AnalisisFinancieroService {
     private final RestClient restClient;
 
     // Inyección del RestClient para conectar con Python (Tarea 47)
-    public AnalisisFinancieroService(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder
+    public AnalisisFinancieroService() {
+        this.restClient = RestClient.builder()
                 .baseUrl("http://localhost:5000") // URL donde corre el servicio de Python
                 .build();
     }
