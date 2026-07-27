@@ -2,64 +2,65 @@ package com.alura.finance_ai.service;
 
 import com.alura.finance_ai.dto.AnalisisRequest;
 import com.alura.finance_ai.dto.TransaccionDTO;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class AnalisisFinancieroService {
 
     private final RestClient restClient;
 
-    // Inyección del RestClient para conectar con Python (Tarea 47)
-    public AnalisisFinancieroService() {
+    public AnalisisFinancieroService(@Value("${servicio.ia.url:http://localhost:8000}") String servicioIaUrl) {
         this.restClient = RestClient.builder()
-                .baseUrl("http://localhost:5000") // URL donde corre el servicio de Python
+                .baseUrl(servicioIaUrl)
                 .build();
     }
 
-    // Tarea 47: Método opcional para consultar el perfil de Python de forma remota si se requiere
-    public String obtenerPerfilDesdePython(AnalisisRequest request) {
+    public String realizarPrediccionInterna(Object payload) {
         try {
             return restClient.post()
-                    .uri("/perfil") // Endpoint del modelo de clasificación de perfil en Python
-                    .body(request)
+                    .uri("/prediccion-interna")
+                    .body(payload)
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            return "Saludable"; // Fallback por defecto si Python no está activo localmente
+            return "Saludable";
         }
     }
 
-    // Tarea 47-bis: Endpoint o método para clasificar una sola transacción con el Modelo 1
     public String clasificarTransaccion(TransaccionDTO transaccion) {
         try {
             return restClient.post()
-                    .uri("/clasificar") // Endpoint del Modelo 1 en Python
+                    .uri("/prediccion-interna")
                     .body(transaccion)
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            return "Categoría No Disponible (Sin conexión a IA)";
+            return simularClasificacion(transaccion.descripcion());
         }
     }
 
+    private String simularClasificacion(String descripcion) {
+        if (descripcion == null) return "Otros";
+
+        String descLower = descripcion.toLowerCase();
+        if (descLower.contains("supermercado") || descLower.contains("comida")) {
+            return "Alimentación";
+        } else if (descLower.contains("cine") || descLower.contains("juegos")) {
+            return "Entretenimiento";
+        }
+
+        return "Otros";
+    }
 
     public List<String> analizarFinanzas(AnalisisRequest request, String perfilPython) {
 
         List<String> recomendaciones = new ArrayList<>();
 
-        // Si prefieres que el perfil se obtenga automáticamente de Python mediante el RestClient:
-        // String perfilPython = obtenerPerfilDesdePython(request);
-
-        // =========================================================
-        // TAREA 48: Alertas de Gastos Elevados
-        // =========================================================
         if (request.transacciones() != null
                 && request.ingresoMensual() != null
                 && request.ingresoMensual() > 0) {
@@ -77,14 +78,11 @@ public class AnalisisFinancieroService {
             }
         }
 
-        // =========================================================
-        // TAREA 49: Recomendaciones Financieras según el perfil
-        // =========================================================
         if (perfilPython != null) {
             if (perfilPython.equalsIgnoreCase("En riesgo")) {
                 recomendaciones.add(
-                        "Alerta: Su nivel de endeudamiento supera los límites recomendados. "
-                                + "Evite adquirir nuevos créditos."
+                        "Alerta: Su perfil financiero actual presenta un nivel de riesgo. "
+                                + "Evite adquirir nuevos compromisos financieros."
                 );
             } else if (perfilPython.equalsIgnoreCase("Saludable")) {
                 recomendaciones.add(
@@ -94,52 +92,10 @@ public class AnalisisFinancieroService {
             }
         }
 
-        // =========================================================
-        // TAREA 49-bis: Recomendaciones Financieras por Categoría
-        // =========================================================
-        if (request.transacciones() != null
-                && request.ingresoMensual() != null
-                && request.ingresoMensual() > 0) {
-
-            Map<String, Double> resumenGastos = new HashMap<>();
-
-            for (TransaccionDTO transaccion : request.transacciones()) {
-                String categoria = transaccion.categoria();
-                resumenGastos.put(
-                        categoria,
-                        resumenGastos.getOrDefault(categoria, 0.0) + transaccion.valor()
-                );
-            }
-
-            double umbralCategoria = request.ingresoMensual() * 0.30;
-
-            for (Map.Entry<String, Double> gasto : resumenGastos.entrySet()) {
-                if (gasto.getValue() > umbralCategoria) {
-                    recomendaciones.add(
-                            "Se recomienda reducir gastos en la categoría de " + gasto.getKey()
-                    );
-                }
-            }
-        }
-
-        // =========================================================
-        // TAREA 49-ter: Recomendación según la frecuencia de ahorro
-        // =========================================================
         if (request.frecuenciaAhorro() != null
                 && request.frecuenciaAhorro().equalsIgnoreCase("Baja")) {
             recomendaciones.add(
                     "Aumentar la frecuencia de ahorro ayudaría a mejorar tu perfil financiero"
-            );
-        }
-
-        // =========================================================
-        // RECOMENDACIÓN ADICIONAL: Nivel de endeudamiento
-        // =========================================================
-        if (request.nivelEndeudamiento() != null
-                && request.nivelEndeudamiento() > 5) {
-            recomendaciones.add(
-                    "Se recomienda revisar su nivel de endeudamiento actual "
-                            + "para mejorar su salud financiera."
             );
         }
 
