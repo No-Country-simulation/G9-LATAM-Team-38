@@ -83,7 +83,11 @@ class Transaccion(BaseSchema):
 
 
 class TransaccionesRequest(BaseSchema):
-    """Payload de entrada para /predict-internal."""
+    """Payload de entrada para /prediccion-interna.
+
+    Contiene una lista de transacciones (texto + monto) y opcionalmente variables
+    numéricas para el modelo de perfil financiero.
+    """
     usuario_id: Optional[str] = None
     transacciones: List[Transaccion] = Field(..., min_length=1)
 
@@ -146,3 +150,72 @@ def predict_internal(payload: TransaccionesRequest):
         resultados.append({"idTransaccion": tx.id_transaccion, "categoria": categoria})
 
     return {"transacciones": resultados}
+
+
+@app.post("/prediccion-interna")
+def prediccion_interna(payload: TransaccionesRequest):
+    """Endpoint en español que ejecuta ambos modelos:
+
+    - Modelo 1 (clasificador_gastos): predice la categoría por transacción usando la descripción.
+    - Modelo 2 (perfil_financiero): predice un perfil financiero a partir de variables numéricas
+      y algunas estadísticas agregadas de las transacciones (total, promedio, count).
+
+    Devuelve las categorías por transacción y el perfil calculado.
+    """
+    # --- Modelo 1: categorías ---
+    modelo_gastos: Any = modelos.get("clasificador_gastos")
+    descripciones = [tx.descripcion for tx in payload.transacciones]
+
+    categorias = []
+    try:
+        predictor = getattr(modelo_gastos, "predict", None)
+        if callable(predictor):
+            # Algunos modelos aceptan lista de strings directamente
+            categorias = list(predictor(descripciones))
+        else:
+            categorias = [f"placeholder_categoria_{d[:10]}" for d in descripciones]
+    except Exception:
+        categorias = ["error_al_predecir" for _ in descripciones]
+
+    transacciones_out = []
+    for tx, cat in zip(payload.transacciones, categorias):
+        transacciones_out.append({"idTransaccion": tx.id_transaccion, "categoria": cat})
+
+    # --- Preparar features para Modelo 2: perfil financiero ---
+    modelo_perfil: Any = modelos.get("perfil_financiero")
+
+    total_gastos = sum(tx.monto for tx in payload.transacciones)
+    promedio_gasto = total_gastos / len(payload.transacciones) if payload.transacciones else 0.0
+    num_transacciones = len(payload.transacciones)
+
+    ingreso = payload.ingreso_mensual if payload.ingreso_mensual is not None else 0.0
+
+    nivel_map = {NivelEndeudamiento.BAJO: 0, NivelEndeudamiento.MEDIO: 1, NivelEndeudamiento.ALTO: 2}
+    nivel_val = nivel_map.get(payload.nivel_endeudamiento, -1)
+
+    features = [ingreso, nivel_val, total_gastos, promedio_gasto, num_transacciones]
+
+    perfil_pred = None
+    try:
+        predictor_perfil = getattr(modelo_perfil, "predict", None)
+        if callable(predictor_perfil):
+            # Muchos modelos esperan una lista 2D: [[f1, f2, ...]]
+            perfil_pred = predictor_perfil([features])[0]
+        else:
+            perfil_pred = f"placeholder_perfil_ing_{ingreso}_niv_{nivel_val}"
+    except Exception:
+        perfil_pred = "error_al_predecir_perfil"
+
+    return {
+        "transacciones": transacciones_out,
+        "perfil": {
+            "valor": perfil_pred,
+            "features_usadas": {
+                "ingresoMensual": ingreso,
+                "nivelEndeudamiento": payload.nivel_endeudamiento.value if payload.nivel_endeudamiento else None,
+                "totalGastos": total_gastos,
+                "promedioGasto": promedio_gasto,
+                "numeroTransacciones": num_transacciones,
+            },
+        },
+    }
