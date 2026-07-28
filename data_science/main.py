@@ -1,26 +1,48 @@
-import pickle
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import date
 from enum import Enum
 from typing import List, Optional, Any
 
-from fastapi import FastAPI
+import joblib
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from pydantic.alias_generators import to_camel
 
+# --------------------------------------------------------------------------
+# Logging
+# --------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("financeai.data_science")
+
+# --------------------------------------------------------------------------
 # Rutas a los modelos serializados
+# --------------------------------------------------------------------------
 MODELS_DIR = Path(__file__).parent / "models"
 CLASIFICADOR_GASTOS_PATH = MODELS_DIR / "clasificador_gastos.pkl"
 PERFIL_FINANCIERO_PATH = MODELS_DIR / "perfil_financiero.pkl"
 
-# Diccionario donde viviran los modelos ya cargados en memoria
+# Diccionario en memoria donde viven los modelos ya cargados
 modelos: dict = {}
+
+# Limite de transacciones por peticion para mitigar payloads excesivos
+MAX_TRANSACCIONES_POR_REQUEST = 200
 
 
 def cargar_modelo(path: Path):
-    with open(path, "rb") as f:
-        return pickle.load(f)
+    """Carga un modelo serializado usando joblib.
+
+    joblib.load() es mas robusto que pickle.load() para objetos de scikit-learn
+    (maneja compresion, arreglos grandes de NumPy y memory-mapping). Si el
+    archivo fue generado con pickle estandar, joblib.load() tambien lo lee.
+    """
+    if not path.exists():
+        raise FileNotFoundError(path)
+    return joblib.load(path)
 
 
 @asynccontextmanager
@@ -29,21 +51,24 @@ async def lifespan(app: FastAPI):
     try:
         modelos["clasificador_gastos"] = cargar_modelo(CLASIFICADOR_GASTOS_PATH)
         modelos["perfil_financiero"] = cargar_modelo(PERFIL_FINANCIERO_PATH)
-        print("Modelos cargados correctamente.")
+        logger.info("Modelos cargados correctamente: %s", list(modelos.keys()))
     except FileNotFoundError as e:
+        logger.error("No se encontro el archivo de modelo: %s", e.filename)
         raise RuntimeError(f"No se encontro el archivo de modelo: {e.filename}") from e
     except Exception as e:
+        logger.exception("Error al cargar los modelos")
         raise RuntimeError(f"Error al cargar los modelos: {e}") from e
 
     yield
 
-    # Shutdown: limpiar referencias (opcional)
+    # Shutdown: limpiar referencias
     modelos.clear()
+    logger.info("Modelos liberados de memoria.")
 
 
-# ----------------
-# Schemas (Pydantic v2) — input in camelCase, attributes in snake_case
-# ----------------
+# --------------------------------------------------------------------------
+# Schemas de entrada (Pydantic v2) — JSON en camelCase, atributos en snake_case
+# --------------------------------------------------------------------------
 
 class NivelEndeudamiento(str, Enum):
     BAJO = "bajo"
@@ -51,8 +76,14 @@ class NivelEndeudamiento(str, Enum):
     ALTO = "alto"
 
 
+class FrecuenciaAhorro(str, Enum):
+    ALTA = "Alta"
+    MEDIA = "Media"
+    BAJA = "Baja"
+
+
 class BaseSchema(BaseModel):
-    """Base común: acepta JSON en camelCase y expone atributos en snake_case."""
+    """Base comun: acepta JSON en camelCase y expone atributos en snake_case."""
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,
@@ -62,15 +93,15 @@ class BaseSchema(BaseModel):
 class Transaccion(BaseSchema):
     id_transaccion: Optional[str] = Field(
         default=None,
-        description="ID de la transacción en el sistema Java (opcional, útil para trazabilidad)",
+        description="ID de la transaccion en el sistema Java (opcional, util para trazabilidad)",
     )
     descripcion: str = Field(
         ...,
         min_length=1,
         max_length=500,
-        description="Texto de la transacción, entrada del Modelo 1 (clasificador de gastos)",
+        description="Texto de la transaccion, entrada del Modelo 1 (clasificador de gastos)",
     )
-    monto: float = Field(..., gt=0, description="Monto de la transacción, debe ser positivo")
+    monto: float = Field(..., gt=0, description="Monto de la transaccion, debe ser positivo")
     fecha: Optional[date] = Field(default=None, description="Fecha ISO 8601 (YYYY-MM-DD)")
 
     @field_validator("descripcion")
@@ -78,18 +109,22 @@ class Transaccion(BaseSchema):
     def descripcion_no_vacia(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError("descripcion no puede estar vacía")
+            raise ValueError("descripcion no puede estar vacia")
         return v
 
 
 class TransaccionesRequest(BaseSchema):
-    """Payload de entrada para /predict-internal."""
+    """Payload de entrada para /prediccion-interna."""
     usuario_id: Optional[str] = None
-    transacciones: List[Transaccion] = Field(..., min_length=1)
+    transacciones: List[Transaccion] = Field(..., min_length=1, max_length=MAX_TRANSACCIONES_POR_REQUEST)
 
     # Campos opcionales para el Modelo 2 (perfil financiero)
     ingreso_mensual: Optional[float] = Field(default=None, ge=0)
     nivel_endeudamiento: Optional[NivelEndeudamiento] = None
+    frecuencia_ahorro: Optional[FrecuenciaAhorro] = Field(
+        default=None,
+        description="Frecuencia de ahorro del usuario (Alta/Media/Baja)",
+    )
 
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -103,10 +138,43 @@ class TransaccionesRequest(BaseSchema):
                 ],
                 "ingresoMensual": 25000.00,
                 "nivelEndeudamiento": "medio",
+                "frecuenciaAhorro": "Media",
             }
         },
     )
 
+
+# --------------------------------------------------------------------------
+# Schemas de respuesta (Pydantic v2)
+# --------------------------------------------------------------------------
+
+class TransaccionClasificada(BaseSchema):
+    id_transaccion: Optional[str] = None
+    categoria: str
+
+
+class FeaturesPerfil(BaseSchema):
+    ingreso_mensual: Optional[float] = None
+    nivel_endeudamiento: Optional[str] = None
+    frecuencia_ahorro: Optional[str] = None
+    total_gastos: float
+    promedio_gasto: float
+    numero_transacciones: int
+
+
+class PerfilResponse(BaseSchema):
+    valor: str
+    features_usadas: FeaturesPerfil
+
+
+class PrediccionResponse(BaseSchema):
+    transacciones: List[TransaccionClasificada]
+    perfil: PerfilResponse
+
+
+# --------------------------------------------------------------------------
+# App
+# --------------------------------------------------------------------------
 
 app = FastAPI(title="FinanceAI - Data Science Microservice", lifespan=lifespan)
 
@@ -119,30 +187,117 @@ def health():
     }
 
 
-@app.post("/predict-internal")
-def predict_internal(payload: TransaccionesRequest):
-    """Endpoint que recibe transacciones (camelCase en JSON) y devuelve categorías.
+def _tiene_predict(modelo: Any) -> bool:
+    return callable(getattr(modelo, "predict", None))
 
-    Usa el modelo cargado en modelos['clasificador_gastos'] si tiene .predict().
-    Para modelos placeholder sin método predict, devuelve una categoría de prueba.
-    """
+
+def clasificar_transacciones(transacciones: List[Transaccion]) -> List[TransaccionClasificada]:
+    """Aplica el Modelo 1 sobre la lista de descripciones."""
+    modelo_gastos = modelos.get("clasificador_gastos")
+    if modelo_gastos is None:
+        raise HTTPException(
+            status_code=503,
+            detail="El modelo clasificador de gastos no esta cargado en memoria.",
+        )
+    if not _tiene_predict(modelo_gastos):
+        raise HTTPException(
+            status_code=500,
+            detail="El modelo clasificador de gastos no expone metodo predict(). Verifica que sea un modelo de scikit-learn valido.",
+        )
+
+    descripciones = [tx.descripcion for tx in transacciones]
+    try:
+        predicciones = modelo_gastos.predict(descripciones)
+    except Exception as e:
+        logger.exception("Fallo al ejecutar predict() del clasificador de gastos")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al clasificar transacciones: {e}",
+        ) from e
+
     resultados = []
-    modelo_gastos: Any = modelos.get("clasificador_gastos")
+    for tx, categoria in zip(transacciones, predicciones):
+        resultados.append(TransaccionClasificada(
+            id_transaccion=tx.id_transaccion,
+            categoria=str(categoria),
+        ))
+    return resultados
 
-    for tx in payload.transacciones:
-        # Intentar usar predict si existe (modelos reales de scikit-learn/etc.)
-        categoria = None
-        try:
-            predictor = getattr(modelo_gastos, "predict", None)
-            if callable(predictor):
-                # Muchos modelos esperan una lista/array de características; aquí sólo usamos la descripcion
-                categoria = predictor([tx.descripcion])[0]
-            else:
-                # Fallback para placeholders
-                categoria = f"placeholder_categoria_{tx.descripcion[:10]}"
-        except Exception:
-            categoria = "error_al_predecir"
 
-        resultados.append({"idTransaccion": tx.id_transaccion, "categoria": categoria})
+def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
+    """Aplica el Modelo 2 sobre las variables numericas agregadas."""
+    modelo_perfil = modelos.get("perfil_financiero")
+    if modelo_perfil is None:
+        raise HTTPException(
+            status_code=503,
+            detail="El modelo de perfil financiero no esta cargado en memoria.",
+        )
+    if not _tiene_predict(modelo_perfil):
+        raise HTTPException(
+            status_code=500,
+            detail="El modelo de perfil financiero no expone metodo predict(). Verifica que sea un modelo de scikit-learn valido.",
+        )
 
-    return {"transacciones": resultados}
+    total_gastos = sum(tx.monto for tx in payload.transacciones)
+    num_tx = len(payload.transacciones)
+    promedio_gasto = total_gastos / num_tx if num_tx else 0.0
+
+    nivel_val = -1
+    if payload.nivel_endeudamiento is not None:
+        nivel_val = {"bajo": 0, "medio": 1, "alto": 2}[payload.nivel_endeudamiento.value]
+
+    ingreso = payload.ingreso_mensual if payload.ingreso_mensual is not None else 0.0
+
+    features = [[ingreso, nivel_val, total_gastos, promedio_gasto, num_tx]]
+    try:
+        prediccion = modelo_perfil.predict(features)[0]
+    except Exception as e:
+        logger.exception("Fallo al ejecutar predict() del perfil financiero")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al calcular el perfil financiero: {e}",
+        ) from e
+
+    return PerfilResponse(
+        valor=str(prediccion),
+        features_usadas=FeaturesPerfil(
+            ingreso_mensual=payload.ingreso_mensual,
+            nivel_endeudamiento=payload.nivel_endeudamiento.value if payload.nivel_endeudamiento else None,
+            frecuencia_ahorro=payload.frecuencia_ahorro.value if payload.frecuencia_ahorro else None,
+            total_gastos=total_gastos,
+            promedio_gasto=promedio_gasto,
+            numero_transacciones=num_tx,
+        ),
+    )
+
+
+@app.post("/prediccion-interna", response_model=PrediccionResponse)
+def prediccion_interna(payload: TransaccionesRequest):
+    """Endpoint principal: clasifica transacciones y calcula el perfil financiero.
+
+    Recibe listas de transacciones (camelCase en JSON) enviadas desde el backend
+    Java, ejecuta .predict() de ambos modelos cargados en memoria y devuelve las
+    categorias y el perfil calculado.
+    """
+    logger.info(
+        "Peticion /prediccion-interna usuario_id=%s transacciones=%d",
+        payload.usuario_id, len(payload.transacciones),
+    )
+
+    transacciones_clasificadas = clasificar_transacciones(payload.transacciones)
+    perfil = calcular_perfil(payload)
+
+    return PrediccionResponse(
+        transacciones=transacciones_clasificadas,
+        perfil=perfil,
+    )
+
+
+@app.post("/predict-internal", response_model=PrediccionResponse)
+def predict_internal(payload: TransaccionesRequest):
+    """Endpoint legacy (alias de /prediccion-interna).
+
+    Se mantiene por compatibilidad con la arquitectura del checklist oficial,
+    que nombra este endpoint como /predict-internal.
+    """
+    return prediccion_interna(payload)

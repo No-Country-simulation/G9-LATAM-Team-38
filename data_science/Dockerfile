@@ -1,7 +1,7 @@
 # Tarea 56 — Dockerfile para el microservicio de Data Science (FastAPI)
-# Imagen base solicitada por el checklist oficial: python:3.10-slim
+# Imagen base alineada con la decision de equipo: Python 3.11.x (no 3.10)
 
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Evitar .pyc y forzar salida de logs sin buffer
 ENV PYTHONDONTWRITEBYTECODE=1 \
