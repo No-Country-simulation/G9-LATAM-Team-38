@@ -9,8 +9,8 @@ import java.util.List;
 
 public record AnalisisRequest(
         @NotNull @Min(0) Double ingresoMensual,
-        @NotNull @Min(0) Integer nivelEndeudamiento,
-        @NotNull String frecuenciaAhorro,
+        Integer nivelEndeudamiento, // La intencion es que si no proporcionan el dato se calcule de manera automatica
+        String frecuenciaAhorro,     // Si no lo agregan proporcionaremos el dato nosotros
         @NotEmpty @Valid List<TransaccionDTO> transacciones
 ) {
 }

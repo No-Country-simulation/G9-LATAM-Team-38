@@ -8,6 +8,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AnalisisFinancieroService {
@@ -28,7 +29,8 @@ public class AnalisisFinancieroService {
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            return "Saludable";
+            // Agregamos esta respuesta por defecto en caso de que falle la comunicacion con data
+            return "En Observacion";
         }
     }
 
@@ -48,54 +50,69 @@ public class AnalisisFinancieroService {
         if (descripcion == null) return "Otros";
 
         String descLower = descripcion.toLowerCase();
-        if (descLower.contains("supermercado") || descLower.contains("comida")) {
+        if (descLower.contains("supermercado") || descLower.contains("comida") || descLower.contains("restaurante")) {
             return "Alimentación";
-        } else if (descLower.contains("cine") || descLower.contains("juegos")) {
+        } else if (descLower.contains("cine") || descLower.contains("streaming") || descLower.contains("juegos")) {
             return "Entretenimiento";
+        } else if (descLower.contains("uber") || descLower.contains("gasolina") || descLower.contains("transporte")) {
+            return "Transporte";
         }
 
         return "Otros";
     }
 
-    public List<String> analizarFinanzas(AnalisisRequest request, String perfilPython) {
+    public List<String> generarRecomendaciones(
+            AnalisisRequest request,
+            String perfilPython,
+            Map<String, Double> resumenGastos) {
 
         List<String> recomendaciones = new ArrayList<>();
 
-        if (request.transacciones() != null
-                && request.ingresoMensual() != null
-                && request.ingresoMensual() > 0) {
-
-            double umbralGasto = request.ingresoMensual() * 0.10;
+        if (request.transacciones() != null && request.ingresoMensual() != null && request.ingresoMensual() > 0) {
+            double umbral10PorCiento = request.ingresoMensual() * 0.10;
 
             for (TransaccionDTO transaccion : request.transacciones()) {
-                if (transaccion.valor() > umbralGasto) {
+                if (transaccion.valor() > umbral10PorCiento) {
                     recomendaciones.add(
-                            "[ALERTA] El gasto en '"
-                                    + transaccion.descripcion()
-                                    + "' supera el límite preventivo recomendado por transacción"
+                            "[ALERTA] El gasto en '" + transaccion.descripcion() +
+                                    "' supera el límite preventivo recomendado por transacción"
                     );
                 }
             }
         }
 
         if (perfilPython != null) {
-            if (perfilPython.equalsIgnoreCase("En riesgo")) {
+            if (perfilPython.equalsIgnoreCase("En Riesgo")) {
                 recomendaciones.add(
-                        "Alerta: Su perfil financiero actual presenta un nivel de riesgo. "
-                                + "Evite adquirir nuevos compromisos financieros."
+                        "Alerta: Su nivel de endeudamiento supera los límites recomendados. Evite adquirir nuevos créditos."
                 );
-            } else if (perfilPython.equalsIgnoreCase("Saludable")) {
+            } else if (perfilPython.equalsIgnoreCase("Finanzas Sanas") || perfilPython.equalsIgnoreCase("Saludable")) {
                 recomendaciones.add(
-                        "Buen trabajo. Se recomienda destinar un 10% adicional "
-                                + "a su reserva financiera mensual."
+                        "Buen trabajo. Se recomienda destinar un 10% adicional a su ahorro mensual."
+                );
+            } else if (perfilPython.equalsIgnoreCase("En Observacion")) {
+                recomendaciones.add(
+                        "Atención: Sus gastos actuales están consumiendo la mayor parte de sus ingresos. Recomendamos considerar moderar gastos."
                 );
             }
         }
 
-        if (request.frecuenciaAhorro() != null
-                && request.frecuenciaAhorro().equalsIgnoreCase("Baja")) {
+        if (resumenGastos != null && request.ingresoMensual() != null && request.ingresoMensual() > 0) {
+            double umbral30PorCiento = request.ingresoMensual() * 0.30;
+
+            resumenGastos.forEach((categoria, totalGasto) -> {
+                if (totalGasto > umbral30PorCiento) {
+                    recomendaciones.add(
+                            "Se recomienda reducir gastos en la categoría de " + categoria
+                    );
+                }
+            });
+        }
+
+        String ahorro = request.frecuenciaAhorro();
+        if (ahorro != null && (ahorro.equalsIgnoreCase("Baja") || ahorro.equalsIgnoreCase("Nulo"))) {
             recomendaciones.add(
-                    "Aumentar la frecuencia de ahorro ayudaría a mejorar tu perfil financiero"
+                    "Aumentar la frecuencia de ahorro ayudaría a mejorar tu perfil financiero y tener mejores oportunidades a futuro"
             );
         }
 
