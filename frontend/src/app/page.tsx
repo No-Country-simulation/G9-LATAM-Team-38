@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Terminal, Heart, Send, Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Bot, Terminal, Heart, Send, Plus, Trash2, AlertCircle, CheckCircle2, X } from "lucide-react";
 
 interface Transaccion {
   id: string;
@@ -34,11 +34,31 @@ export default function Home() {
 
   const [resultado, setResultado] = useState<ResultadoAnalisis | null>(null);
 
-  const agregarTransaccion = () => {
+  // Estado para el Modal / Ventana Emergente
+  const [mostrarModal, setMostrarModal] = useState<boolean>(false);
+  const [nuevaDescripcion, setNuevaDescripcion] = useState<string>("");
+  const [nuevoMonto, setNuevoMonto] = useState<string>("");
+
+  const abrirModal = () => {
+    setNuevaDescripcion("");
+    setNuevoMonto("");
+    setMostrarModal(true);
+  };
+
+  const guardarNuevaTransaccion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevaDescripcion.trim() || !nuevoMonto.trim()) return;
+
     setTransacciones([
       ...transacciones,
-      { id: Date.now().toString(), descripcion: "", monto: "" },
+      {
+        id: Date.now().toString(),
+        descripcion: nuevaDescripcion.trim(),
+        monto: nuevoMonto.trim(),
+      },
     ]);
+
+    setMostrarModal(false);
   };
 
   const eliminarTransaccion = (id: string) => {
@@ -91,7 +111,7 @@ export default function Home() {
     if (endeudamientoManual.trim() !== "") confianzaCalc += 5;
     if (frecuenciaAhorroManual.trim() !== "") confianzaCalc += 3;
 
-    // Penalización por inconsistencias graves (gastos superan abismalmente los ingresos)
+    // Penalización por inconsistencias graves
     if (ingreso > 0 && totalGastos > ingreso * 1.5) {
       confianzaCalc -= 15;
     }
@@ -144,7 +164,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0E131F] text-[#FFFFFF] font-sans flex flex-col justify-between selection:bg-[#F97316]/30 p-2 sm:p-4">
+    <div className="min-h-screen bg-[#0E131F] text-[#FFFFFF] font-sans flex flex-col justify-between selection:bg-[#F97316]/30 p-2 sm:p-4 relative">
       {/* HEADER */}
       <header className="flex justify-between items-center px-2 py-1 gap-2">
         <div className="flex items-center gap-2">
@@ -255,9 +275,9 @@ export default function Home() {
                       Transacciones recientes
                     </label>
                     <button
-                      onClick={agregarTransaccion}
+                      onClick={abrirModal}
                       type="button"
-                      className="text-[#F97316] hover:text-[#f88837] text-[11px] font-bold flex items-center gap-0.5"
+                      className="text-[#F97316] hover:text-[#f88837] text-[11px] font-bold flex items-center gap-0.5 transition-colors"
                     >
                       <Plus size={12} /> añadir
                     </button>
@@ -268,7 +288,7 @@ export default function Home() {
                       <div key={item.id} className="flex items-center gap-1.5">
                         <input
                           type="text"
-                          placeholder="Descripción (ej. Mangos)"
+                          placeholder="Descripción (ej. Alimentación)"
                           value={item.descripcion}
                           onChange={(e) =>
                             actualizarTransaccion(item.id, "descripcion", e.target.value)
@@ -290,7 +310,7 @@ export default function Home() {
                         {transacciones.length > 1 && (
                           <button
                             onClick={() => eliminarTransaccion(item.id)}
-                            className="text-white/30 hover:text-[#C85A54] p-0.5"
+                            className="text-white/30 hover:text-[#C85A54] p-0.5 transition-colors"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -337,7 +357,7 @@ export default function Home() {
                   
                   {/* Círculos Calculables */}
                   <div className="flex items-center justify-around sm:justify-start gap-2.5 flex-shrink-0">
-                    {/* Círculo 1: Confianza (AHORA DINÁMICO) */}
+                    {/* Círculo 1: Confianza */}
                     <div className="relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#C85A54] bg-[#1A2332]">
                       <div className="text-center">
                         <span className="text-xs font-bold text-white block leading-none">
@@ -437,6 +457,73 @@ export default function Home() {
           </div>
         </main>
       </div>
+
+      {/* MODAL / VENTANA EMERGENTE PARA AÑADIR TRANSACCIÓN */}
+      {mostrarModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#131924] border border-white/10 rounded-xl p-4 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Plus size={16} className="text-[#F97316]" />
+                Añadir Nueva Transacción
+              </h4>
+              <button
+                onClick={() => setMostrarModal(false)}
+                className="text-white/40 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={guardarNuevaTransaccion} className="space-y-3">
+              <div>
+                <label className="block text-[11px] text-white/70 mb-1 font-medium">
+                  Descripción del gasto
+                </label>
+                <input
+                  type="text"
+                  placeholder="ej. Suscripción Netflix, Servicios..."
+                  value={nuevaDescripcion}
+                  onChange={(e) => setNuevaDescripcion(e.target.value)}
+                  className="w-full bg-[#1A2332] border border-white/10 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#F97316]"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-white/70 mb-1 font-medium">
+                  Monto ($)
+                </label>
+                <input
+                  type="number"
+                  placeholder="ej. 150"
+                  value={nuevoMonto}
+                  onChange={(e) => setNuevoMonto(e.target.value)}
+                  className="w-full bg-[#1A2332] border border-white/10 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#F97316]"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setMostrarModal(false)}
+                  className="px-3 py-1.5 rounded-md text-xs text-white/60 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#F97316] hover:bg-[#e0620d] text-white font-bold px-4 py-1.5 rounded-md text-xs transition-colors shadow"
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="py-1 flex flex-col items-center gap-1">
