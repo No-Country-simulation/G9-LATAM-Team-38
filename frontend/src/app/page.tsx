@@ -517,7 +517,7 @@ export default function Home() {
                   type="submit"
                   className="bg-[#F97316] hover:bg-[#e0620d] text-white font-bold px-4 py-1.5 rounded-md text-xs transition-colors shadow"
                 >
-                  Guardar
+                  Agregar Transacción
                 </button>
               </div>
             </form>
