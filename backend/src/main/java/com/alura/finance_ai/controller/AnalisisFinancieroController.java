@@ -45,7 +45,8 @@ public class AnalisisFinancieroController {
 
     @Operation(summary = "Clasificar transacción", description = "Clasifica automáticamente una transacción individual en una categoría.")
     @PostMapping("/clasificar-transaccion")
-    public ResponseEntity<?> clasificarTransaccion(@Valid @RequestBody TransaccionDTO transaccion) {
+    //Se cambio el <?> por Map<String, Object> para enviar warnings y hacer mas claro lo que devolvemos
+    public ResponseEntity<Map<String, Object>> clasificarTransaccion(@Valid @RequestBody TransaccionDTO transaccion) {
 
         String categoria = analisisService.clasificarTransaccion(transaccion);
 
