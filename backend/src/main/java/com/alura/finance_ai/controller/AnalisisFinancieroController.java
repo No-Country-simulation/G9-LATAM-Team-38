@@ -15,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*") // Permite que el frontend se conecte sin errores de CORS
 @Tag(name = "Finanzas", description = "Endpoints para el análisis y clasificación financiera")
 public class AnalisisFinancieroController {
 

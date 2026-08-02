@@ -75,83 +75,53 @@ export default function Home() {
     );
   };
 
-  const ejecutarAnalisis = () => {
+  const ejecutarAnalisis = async () => {
     const ingreso = parseFloat(ingresoMensual) || 0;
-    
-    // Filtrar transacciones válidas
     const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
-    const totalGastos = transaccionesValidas.reduce(
-      (acc, t) => acc + (parseFloat(t.monto) || 0),
-      0
-    );
-
-    // CÁLCULO AUTO vs MANUAL:
-    let endeudamientoCalc = 0;
-    if (endeudamientoManual.trim() !== "") {
-      endeudamientoCalc = Math.min(Math.max(parseFloat(endeudamientoManual) || 0, 0), 100);
-    } else {
-      endeudamientoCalc = ingreso > 0 ? Math.min(Math.round((totalGastos / ingreso) * 100), 100) : 0;
-    }
-
-    let ahorroCalc = 0;
-    if (frecuenciaAhorroManual.trim() !== "") {
-      ahorroCalc = Math.min(Math.max(parseFloat(frecuenciaAhorroManual) || 0, 0), 100);
-    } else {
-      ahorroCalc = Math.max(0, 100 - endeudamientoCalc);
-    }
-
-    // CÁLCULO DINÁMICO DE CONFIANZA
-    let confianzaCalc = 60; // Base inicial
-
-    if (ingreso > 0) confianzaCalc += 15;
-    if (transaccionesValidas.length >= 3) confianzaCalc += 15;
-    else if (transaccionesValidas.length > 0) confianzaCalc += 8;
+    const totalGastos = transaccionesValidas.reduce((acc, t) => acc + (parseFloat(t.monto) || 0), 0);
     
-    // Premia mayor precisión si ingresaron datos explícitos
-    if (endeudamientoManual.trim() !== "") confianzaCalc += 5;
-    if (frecuenciaAhorroManual.trim() !== "") confianzaCalc += 3;
+    // Preparar el cuerpo de la petición según lo que pide el Backend
+    const transaccionesBackend = transaccionesValidas.map(t => ({
+      descripcion: t.descripcion || "Gasto",
+      valor: parseFloat(t.monto)
+    }));
 
-    // Penalización por inconsistencias graves
-    if (ingreso > 0 && totalGastos > ingreso * 1.5) {
-      confianzaCalc -= 15;
+    const datosEntrada = {
+      ingresoMensual: ingreso,
+      nivelEndeudamiento: endeudamientoManual.trim() !== "" ? parseInt(endeudamientoManual) : null,
+      frecuenciaAhorro: frecuenciaAhorroManual || "Media",
+      transacciones: transaccionesBackend
+    };
+
+    try {
+      // LLAMADA REAL AL BACKEND EN JAVA
+      const response = await fetch("http://localhost:8080/api/analisis-financiero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosEntrada)
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en el backend");
+      }
+
+      const data = await response.json();
+
+      // Mapeamos los datos del JSON de salida a nuestra UI
+      setResultado({
+        confianza: Math.round((data.probabilidad || 0.88) * 100),
+        endeudamiento: endeudamientoManual.trim() !== "" ? parseInt(endeudamientoManual) : Math.round((totalGastos / (ingreso || 1)) * 100),
+        frecuenciaAhorro: frecuenciaAhorroManual === "Alta" ? 100 : (frecuenciaAhorroManual === "Media" ? 50 : 0),
+        estado: data.perfil_financiero || "Desconocido",
+        mensaje: "Análisis generado por el servidor Java (Spring Boot).",
+        totalGastos,
+        recomendaciones: data.recomendaciones || []
+      });
+
+    } catch (error) {
+      console.error(error);
+      alert("Oops! Ocurrió un error al intentar conectarse con el Backend en localhost:8080");
     }
-
-    // Asegurar rango 0 - 98%
-    confianzaCalc = Math.min(Math.max(confianzaCalc, 40), 98);
-
-    // Diagnóstico dinámico
-    let estado = "Saludable";
-    let mensaje = "Nivel de gasto muy controlado. Tienes un excelente margen para inversión y ahorro.";
-    let recomendaciones = [
-      "Considera destinar el excedente a un fondo de inversión.",
-      "Mantén tu nivel de gastos actual para consolidar tus metas."
-    ];
-
-    if (endeudamientoCalc > 50 && endeudamientoCalc <= 80) {
-      estado = "En observación";
-      mensaje = "Nivel de gasto estable, sin señales de riesgo inmediato. Se recomienda dar seguimiento al ahorro mensual.";
-      recomendaciones = [
-        "Monitorear gastos recurrentes de entretenimiento.",
-        "Aumentar la reserva financiera mensual progresivamente."
-      ];
-    } else if (endeudamientoCalc > 80) {
-      estado = "Alerta";
-      mensaje = "El nivel de gasto o endeudamiento es elevado. Riesgo sobre la capacidad de ahorro.";
-      recomendaciones = [
-        "Reducir gastos secundarios no prioritarios.",
-        "Reestructurar presupuesto para asegurar un fondo de emergencia."
-      ];
-    }
-
-    setResultado({
-      confianza: confianzaCalc,
-      endeudamiento: endeudamientoCalc,
-      frecuenciaAhorro: ahorroCalc,
-      estado,
-      mensaje,
-      totalGastos,
-      recomendaciones,
-    });
   };
 
   const coloresSegmentos = [
@@ -256,15 +226,19 @@ export default function Home() {
 
                   <div>
                     <label className="block text-[10px] font-semibold text-white/70 mb-0.5 whitespace-nowrap">
-                      Frecuencia de ahorro (%)
+                      Frecuencia de ahorro
                     </label>
-                    <input
-                      type="number"
+                    <select
                       value={frecuenciaAhorroManual}
                       onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
-                      placeholder="Auto"
                       className="w-full bg-[#1A2332] border border-white/10 rounded-md px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:border-[#F97316]"
-                    />
+                    >
+                      <option value="">Auto (Media)</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Media">Media</option>
+                      <option value="Baja">Baja</option>
+                      <option value="Nula">Nula</option>
+                    </select>
                   </div>
                 </div>
 
