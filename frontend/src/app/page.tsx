@@ -123,7 +123,7 @@ export default function Home() {
     } else if (ahorroLower.includes("baja") || ahorroLower.includes("bajo")) {
       ahorroNum = 20;
     } else {
-      ahorroNum = 50; // Media por defecto
+      ahorroNum = 50; 
     }
 
     let confianzaCalc = 85;
@@ -147,12 +147,12 @@ export default function Home() {
   };
 
   const coloresSegmentos = [
+    "bg-[#8DA9C4]",
+    "bg-[#134074]",
+    "bg-[#13315C]",
+    "bg-[#0B2545]",
     "bg-[#62B6CB]",
     "bg-[#5FA8D3]",
-    "bg-[#3B82F6]",
-    "bg-[#10B981]",
-    "bg-[#8B5CF6]",
-    "bg-[#EC4899]",
   ];
 
   const miembrosEquipo: Miembro[] = [
@@ -168,40 +168,40 @@ export default function Home() {
   const noSpinnersClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   const themeStyles = isDarkMode ? {
-    bgMain: "bg-[#0E131F]",
-    textMain: "text-[#FFFFFF]",
-    textMuted: "text-white/60",
-    bannerBg: "bg-[#1B4965]",
-    bannerText: "text-white",
-    cardBg: "bg-[#1A2332]",
-    cardInner: "bg-[#131924]",
-    inputBg: "bg-[#1A2332]",
-    inputText: "text-white",
-    inputBorder: "border-white/10",
-    modalBg: "bg-[#131924]",
-    borderSubtle: "border-white/5"
+    bgMain: "bg-[#0B2545]",
+    textMain: "text-[#EEF4ED]",
+    textMuted: "text-[#EEF4ED]/60",
+    bannerBg: "bg-[#13315C]",
+    bannerText: "text-[#EEF4ED]",
+    cardBg: "bg-[#134074]",
+    cardInner: "bg-[#0B2545]",
+    inputBg: "bg-[#0B2545]",
+    inputText: "text-[#EEF4ED]",
+    inputBorder: "border-[#8DA9C4]/20",
+    modalBg: "bg-[#134074]",
+    borderSubtle: "border-[#8DA9C4]/10"
   } : {
-    bgMain: "bg-[#CAE9FF]",
-    textMain: "text-[#1B4965]",
-    textMuted: "text-[#1B4965]/70",
-    bannerBg: "bg-[#5FA8D3]",
-    bannerText: "text-[#1B4965]",
+    bgMain: "bg-[#EEF4ED]",
+    textMain: "text-[#0B2545]",
+    textMuted: "text-[#0B2545]/70",
+    bannerBg: "bg-[#8DA9C4]",
+    bannerText: "text-[#0B2545]",
     cardBg: "bg-[#FFFFFF]",
-    cardInner: "bg-[#BEE9E8]/30",
+    cardInner: "bg-[#8DA9C4]/15",
     inputBg: "bg-[#FFFFFF]",
-    inputText: "text-[#1B4965]",
-    inputBorder: "border-[#62B6CB]/30",
+    inputText: "text-[#0B2545]",
+    inputBorder: "border-[#8DA9C4]/40",
     modalBg: "bg-[#FFFFFF]",
-    borderSubtle: "border-[#62B6CB]/20"
+    borderSubtle: "border-[#8DA9C4]/30"
   };
 
   return (
-    <div className={`h-screen w-screen ${themeStyles.bgMain} ${themeStyles.textMain} font-sans flex flex-col justify-between selection:bg-[#62B6CB]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300`}>
+    <div className={`h-screen w-screen ${themeStyles.bgMain} ${themeStyles.textMain} font-sans flex flex-col justify-between selection:bg-[#8DA9C4]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300`}>
       
       {/* HEADER */}
       <header className="flex justify-between items-center px-2 py-1 gap-2 max-w-7xl mx-auto w-full flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="bg-[#62B6CB] p-1.5 rounded-xl shadow-md flex items-center justify-center text-[#1B4965]">
+          <div className="bg-[#8DA9C4] p-1.5 rounded-xl shadow-md flex items-center justify-center text-[#0B2545]">
             <Bot size={20} />
           </div>
           <div>
@@ -213,13 +213,13 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="flex items-center gap-1.5 bg-[#62B6CB] text-[#1B4965] text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm hover:bg-[#5FA8D3] transition-colors"
+            className="flex items-center gap-1.5 bg-[#8DA9C4] text-[#0B2545] text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm hover:bg-[#134074] hover:text-[#EEF4ED] transition-colors"
           >
             {isDarkMode ? <Sun size={13} /> : <Moon size={13} />}
             <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
           </button>
 
-          <div className="bg-[#62B6CB] text-[#1B4965] text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm hidden sm:block">
+          <div className="bg-[#8DA9C4] text-[#0B2545] text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm hidden sm:block">
             #38 Equipo Dinamita
           </div>
           <span className={`${themeStyles.textMuted} text-xs hidden md:inline font-medium`}>
@@ -232,21 +232,21 @@ export default function Home() {
       <div className="w-full max-w-7xl mx-auto my-1 flex-1 flex flex-col justify-center min-h-0">
         
         {/* BANNER SUPERIOR */}
-        <div className={`${themeStyles.bannerBg} border border-[#62B6CB]/30 rounded-t-2xl px-5 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center relative shadow-lg flex-shrink-0 transition-colors duration-300`}>
+        <div className={`${themeStyles.bannerBg} border border-[#8DA9C4]/30 rounded-t-2xl px-5 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center relative shadow-lg flex-shrink-0 transition-colors duration-300`}>
           <div className="z-10">
-            <div className="text-[#1B4965] text-[9px] font-bold tracking-widest uppercase mb-0.5">
+            <div className={`${isDarkMode ? 'text-[#8DA9C4]' : 'text-[#0B2545]'} text-[9px] font-bold tracking-widest uppercase mb-0.5`}>
               ANÁLISIS FINANCIERO
             </div>
             <h2 className={`text-sm md:text-lg font-bold flex items-center gap-2 ${themeStyles.bannerText}`}>
-              <Zap size={18} className="text-[#1B4965] fill-[#1B4965]/20 stroke-[2.5]" />
+              <Zap size={18} className={`${isDarkMode ? 'text-[#8DA9C4] fill-[#8DA9C4]/20' : 'text-[#0B2545] fill-[#0B2545]/25'} stroke-[2.5]`} />
               Conoce recomendaciones y tu salud financiera
             </h2>
           </div>
 
-          <div className="z-10 mt-1 sm:mt-0 flex items-center gap-2 bg-[#1B4965]/20 border border-[#1B4965]/30 px-3 py-1 rounded-full">
-            <div className="w-2 h-2 rounded-full bg-[#1B4965] animate-pulse"></div>
-            <span className="text-[11px] font-mono text-[#1B4965] font-semibold flex items-center gap-1.5">
-              <Send size={11} className="text-[#1B4965]" />
+          <div className="z-10 mt-1 sm:mt-0 flex items-center gap-2 bg-[#0B2545]/20 border border-[#8DA9C4]/30 px-3 py-1 rounded-full">
+            <div className="w-2 h-2 rounded-full bg-[#8DA9C4] animate-pulse"></div>
+            <span className={`text-[11px] font-mono ${isDarkMode ? 'text-[#EEF4ED]' : 'text-[#0B2545]'} font-semibold flex items-center gap-1.5`}>
+              <Send size={11} className={isDarkMode ? 'text-[#8DA9C4]' : 'text-[#0B2545]'} />
               /Analisis-Financiero
             </span>
           </div>
@@ -258,8 +258,8 @@ export default function Home() {
           {/* COLUMNA IZQUIERDA (ENTRADA) */}
           <div className="flex flex-col gap-2 min-h-0">
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center justify-center w-3 h-3 border-2 border-[#62B6CB] rounded-[2px]">
-                <div className="w-0.5 h-0.5 bg-[#62B6CB]"></div>
+              <div className="flex items-center justify-center w-3 h-3 border-2 border-[#8DA9C4] rounded-[2px]">
+                <div className="w-0.5 h-0.5 bg-[#8DA9C4]"></div>
               </div>
               <h3 className={`${themeStyles.textMuted} font-bold tracking-widest text-[11px] uppercase`}>Entrada</h3>
             </div>
@@ -277,7 +277,7 @@ export default function Home() {
                     value={ingresoMensual}
                     onChange={(e) => setIngresoMensual(e.target.value)}
                     placeholder="4500"
-                    className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB] ${noSpinnersClass}`}
+                    className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                   />
                 </div>
 
@@ -292,7 +292,7 @@ export default function Home() {
                       value={endeudamientoManual}
                       onChange={(e) => setEndeudamientoManual(e.target.value)}
                       placeholder="25"
-                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB] ${noSpinnersClass}`}
+                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                     />
                   </div>
 
@@ -305,7 +305,7 @@ export default function Home() {
                       value={frecuenciaAhorroManual}
                       onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
                       placeholder="Media"
-                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB]`}
+                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
                     />
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export default function Home() {
                     <button
                       onClick={abrirModal}
                       type="button"
-                      className="text-[#62B6CB] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
+                      className="text-[#8DA9C4] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
                     >
                       <Plus size={13} /> añadir
                     </button>
@@ -335,7 +335,7 @@ export default function Home() {
                           onChange={(e) =>
                             actualizarTransaccion(item.id, "descripcion", e.target.value)
                           }
-                          className={`flex-grow ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-2.5 py-1 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB]`}
+                          className={`flex-grow ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-2.5 py-1 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
                         />
                         <div className="relative w-24 flex-shrink-0">
                           <span className="absolute left-2 top-1 text-xs opacity-50">$</span>
@@ -346,7 +346,7 @@ export default function Home() {
                             onChange={(e) =>
                               actualizarTransaccion(item.id, "monto", e.target.value)
                             }
-                            className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg pl-4 pr-1.5 py-1 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB] ${noSpinnersClass}`}
+                            className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg pl-4 pr-1.5 py-1 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                           />
                         </div>
                         {transacciones.length > 1 && (
@@ -365,10 +365,10 @@ export default function Home() {
 
               <button
                 onClick={ejecutarAnalisis}
-                className="w-full bg-[#62B6CB] hover:bg-[#5FA8D3] text-[#1B4965] font-bold py-2 rounded-lg transition-all shadow-md flex items-center justify-center gap-2 text-xs flex-shrink-0"
+                className="w-full bg-[#8DA9C4] hover:bg-[#13315C] text-[#0B2545] hover:text-[#EEF4ED] font-bold py-2 rounded-lg transition-all shadow-md flex items-center justify-center gap-2 text-xs flex-shrink-0"
               >
-                <div className="w-2 h-2 border-2 border-[#1B4965] rounded-[1px] flex items-center justify-center">
-                  <div className="w-0.5 h-0.5 bg-[#1B4965]"></div>
+                <div className="w-2 h-2 border-2 border-currentColor rounded-[1px] flex items-center justify-center">
+                  <div className="w-0.5 h-0.5 bg-currentColor"></div>
                 </div>
                 Ejecutar análisis
               </button>
@@ -378,8 +378,8 @@ export default function Home() {
           {/* COLUMNA DERECHA (RESULTADO) */}
           <div className={`flex flex-col gap-2 lg:pl-5 lg:border-l ${themeStyles.borderSubtle} min-h-0`}>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center justify-center w-3 h-3 border-2 border-[#62B6CB] rounded-[2px]">
-                <div className="w-0.5 h-0.5 bg-[#62B6CB]"></div>
+              <div className="flex items-center justify-center w-3 h-3 border-2 border-[#8DA9C4] rounded-[2px]">
+                <div className="w-0.5 h-0.5 bg-[#8DA9C4]"></div>
               </div>
               <h3 className={`${themeStyles.textMuted} font-bold tracking-widest text-[11px] uppercase`}>Resultado</h3>
             </div>
@@ -397,7 +397,7 @@ export default function Home() {
                 {/* Diagnóstico superior */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0">
                   <div className="flex items-center justify-around sm:justify-start gap-2.5 flex-shrink-0">
-                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#62B6CB] ${themeStyles.cardBg}`}>
+                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#8DA9C4] ${themeStyles.cardBg}`}>
                       <div className="text-center">
                         <span className="text-xs font-bold block leading-none">
                           {resultado.confianza}%
@@ -406,7 +406,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#5FA8D3] ${themeStyles.cardBg}`}>
+                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#13315C] ${themeStyles.cardBg}`}>
                       <div className="text-center">
                         <span className="text-xs font-bold block leading-none">
                           {resultado.endeudamiento}%
@@ -415,7 +415,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#62B6CB] ${themeStyles.cardBg}`}>
+                    <div className={`relative w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#8DA9C4] ${themeStyles.cardBg}`}>
                       <div className="text-center">
                         <span className="text-xs font-bold block leading-none truncate max-w-[40px]">
                           {resultado.frecuenciaAhorroText}
@@ -425,8 +425,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className={`flex-grow ${themeStyles.cardBg} p-2.5 rounded-lg border border-[#62B6CB]/20`}>
-                    <div className="inline-block bg-[#62B6CB]/20 text-[#62B6CB] text-[8.5px] font-bold px-1.5 py-0.5 rounded mb-0.5 border border-[#62B6CB]/30">
+                  <div className={`flex-grow ${themeStyles.cardBg} p-2.5 rounded-lg border border-[#8DA9C4]/25`}>
+                    <div className="inline-block bg-[#8DA9C4]/20 text-[#8DA9C4] text-[8.5px] font-bold px-1.5 py-0.5 rounded mb-0.5 border border-[#8DA9C4]/30">
                       ☐ {resultado.estado}
                     </div>
                     <p className="text-[11px] opacity-90 leading-tight">
@@ -475,12 +475,12 @@ export default function Home() {
 
                 {/* Recomendaciones */}
                 <div className={`space-y-1.5 pt-2 border-t ${themeStyles.borderSubtle} flex-shrink-0`}>
-                  <span className="text-[9.5px] uppercase tracking-wider text-[#62B6CB] font-bold block mb-1">
+                  <span className="text-[9.5px] uppercase tracking-wider text-[#8DA9C4] font-bold block mb-1">
                     Recomendaciones
                   </span>
                   {resultado.recomendaciones.map((rec, i) => (
-                    <div key={i} className={`flex items-start gap-2 ${themeStyles.cardBg} p-2 rounded-lg border border-[#62B6CB]/20 text-[11px] opacity-90`}>
-                      <CheckCircle2 size={13} className="text-[#62B6CB] flex-shrink-0 mt-0.5" />
+                    <div key={i} className={`flex items-start gap-2 ${themeStyles.cardBg} p-2 rounded-lg border border-[#8DA9C4]/20 text-[11px] opacity-90`}>
+                      <CheckCircle2 size={13} className="text-[#8DA9C4] flex-shrink-0 mt-0.5" />
                       <span className="leading-tight">{rec}</span>
                     </div>
                   ))}
@@ -492,13 +492,13 @@ export default function Home() {
         </main>
       </div>
 
-      {/* MODAL (SIN EFECTO BORROSO / BACKDROP BLUR) */}
+      {/* MODAL */}
       {mostrarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className={`${themeStyles.modalBg} border border-[#62B6CB]/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative z-10`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className={`${themeStyles.modalBg} border border-[#8DA9C4]/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative z-10`}>
             <div className="flex justify-between items-center mb-5">
               <h4 className="text-base font-bold flex items-center gap-2">
-                <Plus size={20} className="text-[#62B6CB]" />
+                <Plus size={20} className="text-[#8DA9C4]" />
                 Añadir Nueva Transacción
               </h4>
               <button
@@ -519,7 +519,7 @@ export default function Home() {
                   placeholder="ej. Supermercado, Streaming..."
                   value={nuevaDescripcion}
                   onChange={(e) => setNuevaDescripcion(e.target.value)}
-                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB]`}
+                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
                   autoFocus
                   required
                 />
@@ -534,7 +534,7 @@ export default function Home() {
                   placeholder="ej. 150"
                   value={nuevoMonto}
                   onChange={(e) => setNuevoMonto(e.target.value)}
-                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#62B6CB] ${noSpinnersClass}`}
+                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                   required
                 />
               </div>
@@ -549,7 +549,7 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#62B6CB] hover:bg-[#5FA8D3] text-[#1B4965] font-bold px-5 py-2 rounded-lg text-xs transition-colors shadow-md"
+                  className="bg-[#8DA9C4] hover:bg-[#13315C] text-[#0B2545] hover:text-[#EEF4ED] font-bold px-5 py-2 rounded-lg text-xs transition-colors shadow-md"
                 >
                   Agregar Transacción
                 </button>
@@ -564,16 +564,16 @@ export default function Home() {
         <div className="relative">
           <button
             onClick={() => setMostrarMiembros(!mostrarMiembros)}
-            className={`flex items-center gap-2 ${themeStyles.cardBg} hover:opacity-90 px-3.5 py-1 rounded-full text-[11px] font-semibold border border-[#62B6CB]/30 transition-all shadow-md active:scale-95`}
+            className={`flex items-center gap-2 ${themeStyles.cardBg} hover:opacity-90 px-3.5 py-1 rounded-full text-[11px] font-semibold border border-[#8DA9C4]/30 transition-all shadow-md active:scale-95`}
           >
-            <Users size={13} className="text-[#62B6CB]" />
+            <Users size={13} className="text-[#8DA9C4]" />
             <span>Miembros del equipo</span>
             {mostrarMiembros ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
           </button>
 
           {mostrarMiembros && (
-            <div className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 ${themeStyles.modalBg} border border-[#62B6CB]/30 rounded-xl p-2.5 shadow-2xl z-40`}>
-              <div className="text-[10px] font-bold text-[#62B6CB] uppercase tracking-wider mb-1.5 text-center border-b border-white/5 pb-1 flex justify-between items-center px-1">
+            <div className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 ${themeStyles.modalBg} border border-[#8DA9C4]/30 rounded-xl p-2.5 shadow-2xl z-40`}>
+              <div className="text-[10px] font-bold text-[#8DA9C4] uppercase tracking-wider mb-1.5 text-center border-b border-white/5 pb-1 flex justify-between items-center px-1">
                 <span>Integrantes del Equipo 38</span>
                 <span>Enlaces</span>
               </div>
@@ -584,7 +584,7 @@ export default function Home() {
                     className={`flex items-center justify-between gap-2 ${themeStyles.cardBg} px-2.5 py-1 rounded-lg border ${themeStyles.borderSubtle} text-[10.5px]`}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <div className="w-4 h-4 rounded-full bg-[#62B6CB]/20 text-[#62B6CB] font-bold text-[8px] flex items-center justify-center flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-[#8DA9C4]/20 text-[#8DA9C4] font-bold text-[8px] flex items-center justify-center flex-shrink-0">
                         •
                       </div>
                       <span className="truncate font-medium">{m.nombre}</span>
@@ -627,7 +627,7 @@ export default function Home() {
         
         <div className={`flex items-center gap-1 ${themeStyles.textMuted} text-[8.5px] text-center`}>
           <span>Hecho con</span>
-          <Heart size={9} className="text-[#62B6CB] fill-[#62B6CB]" />
+          <Heart size={9} className="text-[#8DA9C4] fill-[#8DA9C4]" />
           <span>por Proyecto <strong className="opacity-90">Equipo Dinamita - 38</strong> — Hackathon ONE para <strong className="opacity-90">Alura · Oracle · NoCountry</strong></span>
         </div>
       </footer>
