@@ -29,7 +29,14 @@ public class AnalisisFinancieroService {
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            // Agregamos esta respuesta por defecto en caso de que falle la comunicacion con data
+            // Simulamos una respuesta realista para que el Front-End pueda hacer pruebas 
+            // sin depender de Data Science.
+            if (payload instanceof com.alura.finance_ai.dto.AnalisisRequest req) {
+                if (req.nivelEndeudamiento() != null) {
+                    if (req.nivelEndeudamiento() < 30) return "Saludable";
+                    if (req.nivelEndeudamiento() > 70) return "En Riesgo";
+                }
+            }
             return "En Observacion";
         }
     }

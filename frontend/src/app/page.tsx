@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bot, Terminal, Heart, Send, Plus, Trash2, AlertCircle, CheckCircle2, X } from "lucide-react";
 
 interface Transaccion {
@@ -34,10 +34,30 @@ export default function Home() {
 
   const [resultado, setResultado] = useState<ResultadoAnalisis | null>(null);
 
-  // Estado para el Modal / Ventana Emergente
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
   const [nuevaDescripcion, setNuevaDescripcion] = useState<string>("");
   const [nuevoMonto, setNuevoMonto] = useState<string>("");
+
+  // Auto-cálculo en tiempo real conforme el usuario agrega transacciones
+  useEffect(() => {
+    const ingreso = parseFloat(ingresoMensual) || 0;
+    const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
+    const totalGastos = transaccionesValidas.reduce((acc, t) => acc + (parseFloat(t.monto) || 0), 0);
+    
+    // Calcular endeudamiento
+    let endeudamientoCalculado = ingreso > 0 ? Math.round((totalGastos / ingreso) * 100) : 0;
+    if (endeudamientoCalculado > 100) endeudamientoCalculado = 100;
+    
+    setEndeudamientoManual(endeudamientoCalculado.toString());
+
+    // Calcular ahorro
+    const porcentajeSobrante = 100 - endeudamientoCalculado;
+    if (porcentajeSobrante >= 20) setFrecuenciaAhorroManual("Alta");
+    else if (porcentajeSobrante >= 10) setFrecuenciaAhorroManual("Media");
+    else if (porcentajeSobrante > 0) setFrecuenciaAhorroManual("Baja");
+    else setFrecuenciaAhorroManual("Nula");
+    
+  }, [transacciones, ingresoMensual]);
 
   const abrirModal = () => {
     setNuevaDescripcion("");
@@ -86,10 +106,54 @@ export default function Home() {
       valor: parseFloat(t.monto)
     }));
 
+    // --- CÁLCULOS INTERNOS AUTOMÁTICOS ---
+    // 1. Calcular Endeudamiento (% de ingresos gastado)
+    let endeudamientoCalculado = Math.round((totalGastos / (ingreso || 1)) * 100);
+    if (endeudamientoCalculado > 100) endeudamientoCalculado = 100;
+    
+    const endeudamientoFinal = endeudamientoManual.trim() !== "" ? parseInt(endeudamientoManual) : endeudamientoCalculado;
+
+    // 2. Calcular Frecuencia de Ahorro según el dinero sobrante (si no se eligió manualmente)
+    const porcentajeSobrante = 100 - endeudamientoFinal;
+    let frecuenciaCalculada = "Baja";
+    let porcentajeAhorroGrafica = 0;
+
+    if (porcentajeSobrante >= 20) {
+      frecuenciaCalculada = "Alta"; // Le sobra buen dinero, puede ahorrar frecuentemente
+      porcentajeAhorroGrafica = 100;
+    } else if (porcentajeSobrante >= 10) {
+      frecuenciaCalculada = "Media";
+      porcentajeAhorroGrafica = 50;
+    } else if (porcentajeSobrante > 0) {
+      frecuenciaCalculada = "Baja";
+      porcentajeAhorroGrafica = 20;
+    } else {
+      frecuenciaCalculada = "Nula"; // Gasta más de lo que gana, no puede ahorrar
+      porcentajeAhorroGrafica = 0;
+    }
+
+    const frecuenciaFinal = frecuenciaAhorroManual !== "" ? frecuenciaAhorroManual : frecuenciaCalculada;
+    
+    // Si el usuario eligió manualmente, forzamos el valor de la gráfica para que tenga sentido visual
+    if (frecuenciaAhorroManual !== "") {
+       if (frecuenciaFinal === "Alta") porcentajeAhorroGrafica = 100;
+       else if (frecuenciaFinal === "Media") porcentajeAhorroGrafica = 50;
+       else if (frecuenciaFinal === "Baja") porcentajeAhorroGrafica = 20;
+       else porcentajeAhorroGrafica = 0;
+    }
+
+    // ACTUALIZAR LOS CAMPOS VISUALES DE LA IZQUIERDA PARA QUE EL USUARIO VEA LO QUE SE CALCULÓ
+    if (endeudamientoManual.trim() === "") {
+       setEndeudamientoManual(endeudamientoFinal.toString());
+    }
+    if (frecuenciaAhorroManual === "") {
+       setFrecuenciaAhorroManual(frecuenciaFinal);
+    }
+
     const datosEntrada = {
       ingresoMensual: ingreso,
-      nivelEndeudamiento: endeudamientoManual.trim() !== "" ? parseInt(endeudamientoManual) : null,
-      frecuenciaAhorro: frecuenciaAhorroManual || "Media",
+      nivelEndeudamiento: endeudamientoFinal,
+      frecuenciaAhorro: frecuenciaFinal,
       transacciones: transaccionesBackend
     };
 
@@ -110,8 +174,8 @@ export default function Home() {
       // Mapeamos los datos del JSON de salida a nuestra UI
       setResultado({
         confianza: Math.round((data.probabilidad || 0.88) * 100),
-        endeudamiento: endeudamientoManual.trim() !== "" ? parseInt(endeudamientoManual) : Math.round((totalGastos / (ingreso || 1)) * 100),
-        frecuenciaAhorro: frecuenciaAhorroManual === "Alta" ? 100 : (frecuenciaAhorroManual === "Media" ? 50 : 0),
+        endeudamiento: endeudamientoFinal,
+        frecuenciaAhorro: porcentajeAhorroGrafica,
         estado: data.perfil_financiero || "Desconocido",
         mensaje: "Análisis generado por el servidor Java (Spring Boot).",
         totalGastos,
@@ -218,9 +282,9 @@ export default function Home() {
                     <input
                       type="number"
                       value={endeudamientoManual}
-                      onChange={(e) => setEndeudamientoManual(e.target.value)}
+                      readOnly
                       placeholder="Auto"
-                      className="w-full bg-[#1A2332] border border-white/10 rounded-md px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:border-[#F97316]"
+                      className="w-full bg-[#1A2332]/50 border border-white/10 rounded-md px-2.5 py-1 text-xs font-semibold text-white/80 cursor-not-allowed focus:outline-none"
                     />
                   </div>
 
@@ -230,8 +294,8 @@ export default function Home() {
                     </label>
                     <select
                       value={frecuenciaAhorroManual}
-                      onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
-                      className="w-full bg-[#1A2332] border border-white/10 rounded-md px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:border-[#F97316]"
+                      disabled
+                      className="w-full bg-[#1A2332]/50 border border-white/10 rounded-md px-2.5 py-1 text-xs font-semibold text-white/80 cursor-not-allowed focus:outline-none appearance-none"
                     >
                       <option value="">Auto (Media)</option>
                       <option value="Alta">Alta</option>
@@ -411,6 +475,12 @@ export default function Home() {
                         </div>
                       ))}
                   </div>
+                </div>
+
+                {/* Explicación de Métricas para el Usuario */}
+                <div className="bg-[#1A2332]/40 p-2 rounded border border-white/5 text-[9px] text-white/60 space-y-1 mt-1">
+                  <p><strong className="text-white/80">🧠 Confianza ({resultado.confianza}%):</strong> Nivel de seguridad del modelo de Inteligencia Artificial sobre este diagnóstico.</p>
+                  <p><strong className="text-white/80">💰 Frecuencia de Ahorro:</strong> Nivel de capacidad de ahorro detectado (Alta, Media, Baja o Nula) según el dinero sobrante después de gastos.</p>
                 </div>
 
                 {/* Recomendaciones */}
