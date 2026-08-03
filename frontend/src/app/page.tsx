@@ -146,25 +146,6 @@ export default function Home() {
     });
   };
 
-  const coloresSegmentos = [
-    "bg-[#8DA9C4]",
-    "bg-[#134074]",
-    "bg-[#13315C]",
-    "bg-[#0B2545]",
-    "bg-[#62B6CB]",
-    "bg-[#5FA8D3]",
-  ];
-
-  const miembrosEquipo: Miembro[] = [
-    { nombre: "Sonia Moran", linkedin: "https://www.linkedin.com/in/sonia-moran-286717422/", github: "https://github.com/Zonya8" },
-    { nombre: "Brayan Camargo", linkedin: "https://www.linkedin.com/in/brayan-camargo-ram%C3%ADrez/", github: "https://github.com/Brayan-Camargo" },
-    { nombre: "Gabriel Gil", linkedin: "https://www.linkedin.com/in/gabriel-gil-337a20250/", github: "https://github.com/gilgabriel422-netizen" },
-    { nombre: "Armando Tapia", linkedin: "https://www.linkedin.com/in/atapia9/", github: "https://github.com/atapia9" },
-    { nombre: "Jesús García", linkedin: "https://www.linkedin.com/in/jesusjgarciam/", github: "https://github.com/Electrocyte96" },
-    { nombre: "Ian Osnaya", linkedin: "https://www.linkedin.com/in/ian-osnaya-0a7b71375/", github: "https://github.com/IanOsnaya" },
-    { nombre: "Marco Arias", linkedin: "https://www.linkedin.com/in/marco-antonio-arias-mullisaca-b688611ba/", github: "https://github.com/marcomull" },
-  ];
-
   const noSpinnersClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   const themeStyles = isDarkMode ? {
@@ -425,133 +406,103 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className={`flex-grow ${themeStyles.cardBg} p-2.5 rounded-lg border border-[#8DA9C4]/25`}>
-                    <div className="inline-block bg-[#8DA9C4]/20 text-[#8DA9C4] text-[8.5px] font-bold px-1.5 py-0.5 rounded mb-0.5 border border-[#8DA9C4]/30">
-                      ☐ {resultado.estado}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <CheckCircle2 size={13} className="text-[#8DA9C4] flex-shrink-0" />
+                      <span className="text-xs font-bold truncate">Estado: {resultado.estado}</span>
                     </div>
-                    <p className="text-[11px] opacity-90 leading-tight">
+                    <p className={`${themeStyles.textMuted} text-[11px] leading-snug line-clamp-2`}>
                       {resultado.mensaje}
                     </p>
                   </div>
                 </div>
 
-                {/* Resumen de gastos */}
-                <div className="space-y-1.5 flex-shrink-0">
+                {/* Métricas y Recomendaciones */}
+                <div className="space-y-2 flex-1 min-h-0 flex flex-col justify-center">
                   <div className="flex justify-between items-center text-xs">
-                    <span className={`${themeStyles.textMuted} font-medium`}>Resumen de gastos</span>
-                    <span className="font-bold text-xs">${resultado.totalGastos}</span>
+                    <span className={themeStyles.textMuted}>Total de Gastos:</span>
+                    <span className="font-bold">${resultado.totalGastos}</span>
                   </div>
 
-                  <div className={`w-full h-2 ${themeStyles.cardBg} rounded-full overflow-hidden flex`}>
-                    {transacciones
-                      .filter((t) => parseFloat(t.monto) > 0)
-                      .map((item, idx) => {
-                        const monto = parseFloat(item.monto) || 0;
-                        const porcentaje = resultado.totalGastos > 0 
-                          ? (monto / resultado.totalGastos) * 100 
-                          : 0;
-                        return (
-                          <div
-                            key={item.id}
-                            style={{ width: `${porcentaje}%` }}
-                            className={`h-full ${coloresSegmentos[idx % coloresSegmentos.length]} transition-all duration-300`}
-                          />
-                        );
-                      })}
-                  </div>
-
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 mb-2">
-                    {transacciones
-                      .filter((t) => parseFloat(t.monto) > 0)
-                      .map((item, idx) => (
-                        <div key={item.id} className="flex items-center gap-1 text-[11px]">
-                          <div className={`w-1.5 h-1.5 rounded-full ${coloresSegmentos[idx % coloresSegmentos.length]}`} />
-                          <span className={themeStyles.textMuted}>{item.descripcion || 'Gasto'}:</span>
-                          <span className="font-semibold">${item.monto}</span>
-                        </div>
+                  <div className="space-y-1">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${themeStyles.textMuted}`}>
+                      Recomendaciones de IA:
+                    </span>
+                    <ul className="space-y-1">
+                      {resultado.recomendaciones.map((rec, index) => (
+                        <li key={index} className={`text-[11px] flex items-start gap-1.5 ${themeStyles.textMuted}`}>
+                          <span className="text-[#8DA9C4] font-bold">•</span>
+                          <span className="leading-tight">{rec}</span>
+                        </li>
                       ))}
+                    </ul>
                   </div>
-                </div>
-
-                {/* Recomendaciones */}
-                <div className={`space-y-1.5 pt-2 border-t ${themeStyles.borderSubtle} flex-shrink-0`}>
-                  <span className="text-[9.5px] uppercase tracking-wider text-[#8DA9C4] font-bold block mb-1">
-                    Recomendaciones
-                  </span>
-                  {resultado.recomendaciones.map((rec, i) => (
-                    <div key={i} className={`flex items-start gap-2 ${themeStyles.cardBg} p-2 rounded-lg border border-[#8DA9C4]/20 text-[11px] opacity-90`}>
-                      <CheckCircle2 size={13} className="text-[#8DA9C4] flex-shrink-0 mt-0.5" />
-                      <span className="leading-tight">{rec}</span>
-                    </div>
-                  ))}
                 </div>
 
               </div>
             )}
           </div>
+
         </main>
       </div>
 
-      {/* MODAL */}
+      {/* MODAL PARA AÑADIR TRANSACCIÓN */}
       {mostrarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`${themeStyles.modalBg} border border-[#8DA9C4]/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative z-10`}>
-            <div className="flex justify-between items-center mb-5">
-              <h4 className="text-base font-bold flex items-center gap-2">
-                <Plus size={20} className="text-[#8DA9C4]" />
-                Añadir Nueva Transacción
-              </h4>
-              <button
-                onClick={() => setMostrarModal(false)}
-                className="opacity-40 hover:opacity-100 transition-opacity p-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`${themeStyles.modalBg} border ${themeStyles.borderSubtle} rounded-2xl p-5 max-w-sm w-full shadow-2xl relative`}>
+            <button
+              onClick={() => setMostrarModal(false)}
+              className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <X size={16} />
+            </button>
 
-            <form onSubmit={guardarNuevaTransaccion} className="space-y-4">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <Plus size={16} className="text-[#8DA9C4]" /> Añadir Transacción
+            </h3>
+
+            <form onSubmit={guardarNuevaTransaccion} className="space-y-3">
               <div>
-                <label className={`block text-xs ${themeStyles.textMuted} mb-1.5 font-medium`}>
-                  Descripción del gasto
+                <label className={`block text-[11px] font-semibold ${themeStyles.textMuted} mb-1`}>
+                  Descripción
                 </label>
                 <input
                   type="text"
-                  placeholder="ej. Supermercado, Streaming..."
                   value={nuevaDescripcion}
                   onChange={(e) => setNuevaDescripcion(e.target.value)}
-                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
-                  autoFocus
+                  placeholder="Ej. Supermercado, Servicios..."
+                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
                   required
                 />
               </div>
 
               <div>
-                <label className={`block text-xs ${themeStyles.textMuted} mb-1.5 font-medium`}>
+                <label className={`block text-[11px] font-semibold ${themeStyles.textMuted} mb-1`}>
                   Monto ($)
                 </label>
                 <input
                   type="number"
-                  placeholder="ej. 150"
                   value={nuevoMonto}
                   onChange={(e) => setNuevoMonto(e.target.value)}
-                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3.5 py-2 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
+                  placeholder="0.00"
+                  className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3">
+              <div className="pt-2 flex gap-2">
                 <button
                   type="button"
                   onClick={() => setMostrarModal(false)}
-                  className={`px-4 py-2 rounded-lg text-xs opacity-60 hover:opacity-100 transition-opacity font-medium`}
+                  className={`flex-1 border ${themeStyles.inputBorder} hover:opacity-80 text-xs font-bold py-2 rounded-lg transition-opacity`}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#8DA9C4] hover:bg-[#13315C] text-[#0B2545] hover:text-[#EEF4ED] font-bold px-5 py-2 rounded-lg text-xs transition-colors shadow-md"
+                  className="flex-1 bg-[#8DA9C4] text-[#0B2545] hover:opacity-90 text-xs font-bold py-2 rounded-lg transition-opacity"
                 >
-                  Agregar Transacción
+                  Guardar
                 </button>
               </div>
             </form>
@@ -559,78 +510,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* FOOTER */}
-      <footer className="py-1 flex flex-col items-center gap-1.5 max-w-7xl mx-auto w-full flex-shrink-0 relative">
-        <div className="relative">
-          <button
-            onClick={() => setMostrarMiembros(!mostrarMiembros)}
-            className={`flex items-center gap-2 ${themeStyles.cardBg} hover:opacity-90 px-3.5 py-1 rounded-full text-[11px] font-semibold border border-[#8DA9C4]/30 transition-all shadow-md active:scale-95`}
-          >
-            <Users size={13} className="text-[#8DA9C4]" />
-            <span>Miembros del equipo</span>
-            {mostrarMiembros ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-          </button>
-
-          {mostrarMiembros && (
-            <div className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 ${themeStyles.modalBg} border border-[#8DA9C4]/30 rounded-xl p-2.5 shadow-2xl z-40`}>
-              <div className="text-[10px] font-bold text-[#8DA9C4] uppercase tracking-wider mb-1.5 text-center border-b border-white/5 pb-1 flex justify-between items-center px-1">
-                <span>Integrantes del Equipo 38</span>
-                <span>Enlaces</span>
-              </div>
-              <div className="space-y-1">
-                {miembrosEquipo.map((m) => (
-                  <div 
-                    key={m.github || m.nombre} 
-                    className={`flex items-center justify-between gap-2 ${themeStyles.cardBg} px-2.5 py-1 rounded-lg border ${themeStyles.borderSubtle} text-[10.5px]`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div className="w-4 h-4 rounded-full bg-[#8DA9C4]/20 text-[#8DA9C4] font-bold text-[8px] flex items-center justify-center flex-shrink-0">
-                        •
-                      </div>
-                      <span className="truncate font-medium">{m.nombre}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {m.linkedin && (
-                        <a
-                          href={m.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="LinkedIn"
-                          className="p-1 rounded bg-[#0077B5]/20 text-[#0A66C2] hover:bg-[#0077B5]/40 transition-colors"
-                        >
-                          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                          </svg>
-                        </a>
-                      )}
-                      {m.github && (
-                        <a
-                          href={m.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="GitHub"
-                          className="p-1 rounded bg-white/10 hover:bg-white/20 transition-colors"
-                        >
-                          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
-                          </svg>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className={`flex items-center gap-1 ${themeStyles.textMuted} text-[8.5px] text-center`}>
-          <span>Hecho con</span>
-          <Heart size={9} className="text-[#8DA9C4] fill-[#8DA9C4]" />
-          <span>por Proyecto <strong className="opacity-90">Equipo Dinamita - 38</strong> — Hackathon ONE para <strong className="opacity-90">Alura · Oracle · NoCountry</strong></span>
-        </div>
-      </footer>
     </div>
   );
 }
