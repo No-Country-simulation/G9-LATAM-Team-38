@@ -307,13 +307,17 @@ export default function Home() {
                     <label className={`block text-[11px] font-semibold ${themeStyles.textMuted} mb-1 whitespace-nowrap`}>
                       Frecuencia de ahorro
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={frecuenciaAhorroManual}
                       onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
-                      placeholder="Media"
-                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
-                    />
+                      className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] appearance-none cursor-pointer`}
+                    >
+                      <option value="Muy baja">Muy baja</option>
+                      <option value="Baja">Baja</option>
+                      <option value="Media">Media</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Muy alta">Muy alta</option>
+                    </select>
                   </div>
                 </div>
 
