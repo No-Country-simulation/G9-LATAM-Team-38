@@ -29,6 +29,41 @@ public class AnalisisFinancieroController {
     @PostMapping("/analisis-financiero")
     public ResponseEntity<?> procesarAnalisis(@Valid @RequestBody AnalisisRequest request) {
 
+        Integer endeudamiento = request.nivelEndeudamiento();
+        String ahorro = request.frecuenciaAhorro();
+
+        if (endeudamiento == null || ahorro == null || ahorro.isEmpty()) {
+            double totalGastos = 0.0;
+            if (request.transacciones() != null) {
+                for (TransaccionDTO t : request.transacciones()) {
+                    if (t.valor() != null && t.valor() > 0) {
+                        totalGastos += t.valor();
+                    }
+                }
+            }
+
+            if (endeudamiento == null) {
+                double ingreso = request.ingresoMensual() != null && request.ingresoMensual() > 0 ? request.ingresoMensual() : 1.0;
+                endeudamiento = (int) Math.round((totalGastos / ingreso) * 100);
+                if (endeudamiento > 100) endeudamiento = 100;
+            }
+
+            if (ahorro == null || ahorro.isEmpty()) {
+                int porcentajeSobrante = 100 - endeudamiento;
+                if (porcentajeSobrante >= 20) ahorro = "Alta";
+                else if (porcentajeSobrante >= 10) ahorro = "Media";
+                else if (porcentajeSobrante > 0) ahorro = "Baja";
+                else ahorro = "Nula";
+            }
+
+            request = new AnalisisRequest(
+                    request.ingresoMensual(),
+                    endeudamiento,
+                    ahorro,
+                    request.transacciones()
+            );
+        }
+
         String perfilFinanciero = analisisService.realizarPrediccionInterna(request);
 
         Map<String, Double> resumenGastos = calcularResumenGastos(request);
@@ -46,7 +81,8 @@ public class AnalisisFinancieroController {
 
     @Operation(summary = "Clasificar transacción", description = "Clasifica automáticamente una transacción individual en una categoría.")
     @PostMapping("/clasificar-transaccion")
-    public ResponseEntity<?> clasificarTransaccion(@Valid @RequestBody TransaccionDTO transaccion) {
+    //Se cambio el <?> por Map<String, Object> para enviar warnings y hacer mas claro lo que devolvemos
+    public ResponseEntity<Map<String, Object>> clasificarTransaccion(@Valid @RequestBody TransaccionDTO transaccion) {
 
         String categoria = analisisService.clasificarTransaccion(transaccion);
 

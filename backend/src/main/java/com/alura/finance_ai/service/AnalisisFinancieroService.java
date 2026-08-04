@@ -2,6 +2,8 @@ package com.alura.finance_ai.service;
 
 import com.alura.finance_ai.dto.AnalisisRequest;
 import com.alura.finance_ai.dto.TransaccionDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -12,6 +14,8 @@ import java.util.Map;
 
 @Service
 public class AnalisisFinancieroService {
+    //Se agrega un logger para poder ver los errores en la consola en caso de que la IA falle
+   private static final Logger logger = LoggerFactory.getLogger(AnalisisFinancieroService.class);
 
     private final RestClient restClient;
 
@@ -29,6 +33,9 @@ public class AnalisisFinancieroService {
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
+            //Se manda a imprimir el error en color rojo para saber que paso antes de mandar la respuesta por defecto
+            logger.error("Se cayo la conexion con Python en prediccion Interna: " + e.getMessage());
+
             // Simulamos una respuesta realista para que el Front-End pueda hacer pruebas 
             // sin depender de Data Science.
             if (payload instanceof com.alura.finance_ai.dto.AnalisisRequest req) {
@@ -49,7 +56,9 @@ public class AnalisisFinancieroService {
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            return simularClasificacion(transaccion.descripcion());
+            //Se logea el error y se simula la categoria para que el front end no se rompa
+           logger.warn("No se puede clasificar la transaccion, Error: " + e.getMessage());
+           return simularClasificacion(transaccion.descripcion());
         }
     }
 
