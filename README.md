@@ -59,3 +59,7 @@ El entrypoint raíz levanta por defecto el modo `model-free`, por lo que la prue
 3. Ejecuta las solicitudes `Health - API disponible sin modelos` y `Predict internal - contrato de red aislado`.
 
 La segunda solicitud usa `POST http://localhost:8000/predict-internal` y debe devolver `200 OK`, `mode: "model-free"` y `models_loaded: false`. Para activar inferencia real se debe iniciar con `ENABLE_MODEL_API=1`; esa ejecución sí requiere los modelos disponibles.
+
+## Model artifacts
+
+The trained model files can be stored and restored as a versioned generic artifact in Google Artifact Registry. See [docs/MODEL_ARTIFACT_REGISTRY.md](docs/MODEL_ARTIFACT_REGISTRY.md) and the scripts in `scripts/`.
