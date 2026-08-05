@@ -26,45 +26,14 @@ public class AnalisisFinancieroController {
     }
 
     @Operation(summary = "Analizar comportamiento financiero", description = "Recibe datos de ingresos y transacciones para generar perfil, resumen de gastos y recomendaciones.")
-    @PostMapping("/analisis-financiero")
+    @PostMapping(value = {"/analisis-financiero", "/api/v1/analisis"})
     public ResponseEntity<?> procesarAnalisis(@Valid @RequestBody AnalisisRequest request) {
 
-        Integer endeudamiento = request.nivelEndeudamiento();
-        String ahorro = request.frecuenciaAhorro();
-
-        if (endeudamiento == null || ahorro == null || ahorro.isEmpty()) {
-            double totalGastos = 0.0;
-            if (request.transacciones() != null) {
-                for (TransaccionDTO t : request.transacciones()) {
-                    if (t.valor() != null && t.valor() > 0) {
-                        totalGastos += t.valor();
-                    }
-                }
-            }
-
-            if (endeudamiento == null) {
-                double ingreso = request.ingresoMensual() != null && request.ingresoMensual() > 0 ? request.ingresoMensual() : 1.0;
-                endeudamiento = (int) Math.round((totalGastos / ingreso) * 100);
-                if (endeudamiento > 100) endeudamiento = 100;
-            }
-
-            if (ahorro == null || ahorro.isEmpty()) {
-                int porcentajeSobrante = 100 - endeudamiento;
-                if (porcentajeSobrante >= 20) ahorro = "Alta";
-                else if (porcentajeSobrante >= 10) ahorro = "Media";
-                else if (porcentajeSobrante > 0) ahorro = "Baja";
-                else ahorro = "Nula";
-            }
-
-            request = new AnalisisRequest(
-                    request.ingresoMensual(),
-                    endeudamiento,
-                    ahorro,
-                    request.transacciones()
-            );
-        }
+        request = analisisService.validarYCompletarRequest(request);
 
         String perfilFinanciero = analisisService.realizarPrediccionInterna(request);
+        
+        int puntaje = analisisService.calcularPuntaje(request);
 
         Map<String, Double> resumenGastos = calcularResumenGastos(request);
 
@@ -72,6 +41,7 @@ public class AnalisisFinancieroController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("perfil_financiero", perfilFinanciero);
+        response.put("puntaje", puntaje);
         response.put("probabilidad", 0.88);
         response.put("resumen_gastos", resumenGastos);
         response.put("recomendaciones", recomendaciones);
@@ -91,6 +61,16 @@ public class AnalisisFinancieroController {
         response.put("monto", transaccion.valor());
         response.put("categoria_asignada", categoria);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Pre-calcular Endeudamiento y Ahorro", description = "Devuelve los valores autocalculados sin guardar ni realizar todo el análisis pesado.")
+    @PostMapping("/pre-calculo")
+    public ResponseEntity<Map<String, Object>> preCalculo(@Valid @RequestBody AnalisisRequest request) {
+        AnalisisRequest completedRequest = analisisService.validarYCompletarRequest(request);
+        Map<String, Object> response = new HashMap<>();
+        response.put("nivel_endeudamiento", completedRequest.nivelEndeudamiento());
+        response.put("frecuencia_ahorro", completedRequest.frecuenciaAhorro());
         return ResponseEntity.ok(response);
     }
 

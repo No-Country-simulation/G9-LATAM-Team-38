@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Bot, Heart, Send, Plus, Trash2, AlertCircle, CheckCircle2, 
   X, Zap, Users, ChevronDown, ChevronUp, Sun, Moon
@@ -36,9 +36,9 @@ export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
   const [ingresoMensual, setIngresoMensual] = useState<string>("4500");
   
-  // Modos de entrada de datos: null = no decidido, 'auto' = back end calcula, 'manual' = usuario ingresa
   const [modoIngresoDatos, setModoIngresoDatos] = useState<'auto' | 'manual' | null>(null);
   const [mostrarModalModo, setMostrarModalModo] = useState<boolean>(false);
+  const [mensajeAdvertencia, setMensajeAdvertencia] = useState<string | null>(null);
 
   const [endeudamientoManual, setEndeudamientoManual] = useState<string>("");
   const [frecuenciaAhorroManual, setFrecuenciaAhorroManual] = useState<string>("Media");
@@ -57,6 +57,43 @@ export default function Home() {
 
   const [mostrarMiembros, setMostrarMiembros] = useState<boolean>(false);
 
+  const [endeudamientoAuto, setEndeudamientoAuto] = useState<string>("0");
+  const [frecuenciaAhorroAuto, setFrecuenciaAhorroAuto] = useState<string>("Media");
+
+  useEffect(() => {
+    if (modoIngresoDatos === 'auto') {
+      const ingreso = parseFloat(ingresoMensual) || 0;
+      const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
+      const transaccionesBackend = transaccionesValidas.map(t => ({
+        descripcion: t.descripcion || "Gasto",
+        valor: parseFloat(t.monto)
+      }));
+
+      const timeoutId = setTimeout(() => {
+        fetch(`${API_BASE_URL}/pre-calculo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ingreso_mensual: ingreso,
+            nivel_endeudamiento: null,
+            frecuencia_ahorro: null,
+            transacciones: transaccionesBackend
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.nivel_endeudamiento !== undefined) {
+             setEndeudamientoAuto(data.nivel_endeudamiento.toString());
+             setFrecuenciaAhorroAuto(data.frecuencia_ahorro);
+          }
+        })
+        .catch(err => console.error("Error pre-calculo:", err));
+      }, 300); // Debounce de 300ms para no saturar el backend al tipear
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [modoIngresoDatos, ingresoMensual, transacciones]);
+
   const abrirModal = () => {
     setNuevaDescripcion("");
     setNuevoMonto("");
@@ -72,7 +109,7 @@ export default function Home() {
     });
 
     if (!validacion.success) {
-      alert(validacion.error.issues[0]?.message || "Entrada no válida");
+      setMensajeAdvertencia(validacion.error.issues[0]?.message || "Entrada no válida");
       return;
     }
 
@@ -110,6 +147,12 @@ export default function Home() {
     }
   };
 
+  const preventInvalidKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const ejecutarAnalisis = async () => {
     const ingreso = parseFloat(ingresoMensual) || 0;
     
@@ -118,7 +161,7 @@ export default function Home() {
       setMostrarModalModo(true);
       return;
     }
-
+    
     const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
     const totalGastos = transaccionesValidas.reduce((acc, t) => acc + (parseFloat(t.monto) || 0), 0);
     
@@ -132,22 +175,22 @@ export default function Home() {
 
     if (modoIngresoDatos === 'manual') {
       const end = parseFloat(endeudamientoManual);
-      if (isNaN(end) || end < 0 || end > 100) {
-        alert("El nivel de endeudamiento debe ser un número entre 0 y 100.");
+      if (isNaN(end) || end < 0) {
+        setMensajeAdvertencia("El nivel de endeudamiento debe ser un número válido mayor o igual a 0.");
         return;
       }
       nivelEndeudamiento = end;
       
       const frec = frecuenciaAhorroManual.trim().toLowerCase();
       if (!["alta", "media", "baja", "nula"].includes(frec)) {
-        alert("La frecuencia de ahorro debe ser Alta, Media, Baja o Nula.");
+        setMensajeAdvertencia("La frecuencia de ahorro debe ser Alta, Media, Baja o Nula.");
         return;
       }
       frecuenciaAhorro = frecuenciaAhorroManual;
     }
 
     const datosEntrada = {
-      ingresoMensual: ingreso,
+      ingreso_mensual: ingreso,
       nivel_endeudamiento: nivelEndeudamiento,
       frecuencia_ahorro: frecuenciaAhorro,
       transacciones: transaccionesBackend
@@ -161,21 +204,26 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Error en el backend");
+        throw new Error("Error de red al comunicarse con el servidor");
       }
 
       const data = await response.json();
+      
+      if (data.success === false || data.error) {
+        setMensajeAdvertencia(data.error || "Datos financieros inválidos.");
+        return;
+      }
 
       // Mapeamos los datos para la UI
       // Nota: asumiendo que el backend ahora nos podría devolver el endeudamiento y ahorro que usó
       // Si el backend no los devuelve en la respuesta actual, calculamos para la gráfica visual de manera ilustrativa
-      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? Math.min(Math.round((totalGastos / ingreso) * 100), 100);
+      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? Math.round((totalGastos / ingreso) * 100);
       const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? "Media";
       
       let ahorroNum = 50;
       const ahorroLower = freqTextResult.toLowerCase();
       if (ahorroLower.includes("alta") || ahorroLower.includes("alto")) ahorroNum = 80;
-      else if (ahorroLower.includes("baja") || ahorroLower.includes("bajo") || ahorroLower.includes("nula")) ahorroNum = 20;
+      if (ahorroLower.includes("baja") || ahorroLower.includes("bajo") || ahorroLower.includes("nula")) ahorroNum = 20;
 
       const desglose = transaccionesValidas.map(t => {
         const montoNum = parseFloat(t.monto) || 0;
@@ -201,7 +249,7 @@ export default function Home() {
 
     } catch (error) {
       console.error(error);
-      alert(`Oops! Ocurrió un error al intentar conectarse con el Backend en ${API_BASE_URL}`);
+      setMensajeAdvertencia(`Oops! Ocurrió un error al intentar conectarse con el Backend en ${API_BASE_URL}`);
     }
   };
 
@@ -328,8 +376,10 @@ export default function Home() {
                   </label>
                   <input
                     type="number"
+                    min="0"
                     value={ingresoMensual}
                     onChange={(e) => setIngresoMensual(e.target.value)}
+                    onKeyDown={preventInvalidKeys}
                     placeholder="4500"
                     className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                   />
@@ -343,8 +393,10 @@ export default function Home() {
                     </label>
                     <input
                       type={modoIngresoDatos === 'auto' ? "text" : "number"}
-                      value={modoIngresoDatos === 'auto' ? "Auto-cálculo" : endeudamientoManual}
+                      min="0"
+                      value={modoIngresoDatos === 'auto' ? `${endeudamientoAuto}% (Auto)` : endeudamientoManual}
                       onChange={(e) => setEndeudamientoManual(e.target.value)}
+                      onKeyDown={modoIngresoDatos === 'manual' ? preventInvalidKeys : undefined}
                       placeholder="Ej. 25"
                       readOnly={modoIngresoDatos !== 'manual'}
                       className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass} ${modoIngresoDatos !== 'manual' ? 'cursor-pointer' : ''}`}
@@ -369,7 +421,7 @@ export default function Home() {
                     ) : (
                       <input
                         type="text"
-                        value={modoIngresoDatos === 'auto' ? "Auto-cálculo" : frecuenciaAhorroManual}
+                        value={modoIngresoDatos === 'auto' ? `${frecuenciaAhorroAuto} (Auto)` : frecuenciaAhorroManual}
                         readOnly
                         className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] cursor-pointer`}
                       />
@@ -408,11 +460,13 @@ export default function Home() {
                           <span className="absolute left-2 top-1 text-xs opacity-50">$</span>
                           <input
                             type="number"
+                            min="0"
                             placeholder="0"
                             value={item.monto}
                             onChange={(e) =>
                               actualizarTransaccion(item.id, "monto", e.target.value)
                             }
+                            onKeyDown={preventInvalidKeys}
                             className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg pl-4 pr-1.5 py-1 text-xs ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] ${noSpinnersClass}`}
                           />
                         </div>
@@ -707,6 +761,33 @@ export default function Home() {
                 Ingresar datos manualmente
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ADVERTENCIA (VALIDACION) */}
+      {mensajeAdvertencia && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className={`${themeStyles.modalBg} border border-red-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center`}>
+            <button
+              onClick={() => setMensajeAdvertencia(null)}
+              className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <X size={16} />
+            </button>
+            <AlertCircle size={40} className="mx-auto mb-4 text-red-400" />
+            <h3 className="text-lg font-bold mb-2">
+              Validación Financiera
+            </h3>
+            <p className={`text-xs ${themeStyles.textMuted} mb-6`}>
+              {mensajeAdvertencia}
+            </p>
+            <button
+              onClick={() => setMensajeAdvertencia(null)}
+              className="w-full bg-[#8DA9C4] text-[#0B2545] hover:opacity-90 font-bold py-2.5 rounded-lg transition-all shadow-md text-sm"
+            >
+              Entendido
+            </button>
           </div>
         </div>
       )}

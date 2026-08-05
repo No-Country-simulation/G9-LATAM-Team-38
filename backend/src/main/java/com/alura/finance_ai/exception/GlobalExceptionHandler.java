@@ -16,6 +16,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> manejarIncoherenciasMatematicas(IllegalArgumentException exception) {
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("success", false);
+        respuesta.put("error", exception.getMessage());
+        return ResponseEntity.ok(respuesta);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<Map<String, String>>> manejarErroresValidacion(MethodArgumentNotValidException exception){
         List<Map<String, String>> listaErrores = exception.getBindingResult()

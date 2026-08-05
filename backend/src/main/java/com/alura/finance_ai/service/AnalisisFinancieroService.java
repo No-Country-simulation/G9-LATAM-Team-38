@@ -19,10 +19,117 @@ public class AnalisisFinancieroService {
 
     private final RestClient restClient;
 
+    private boolean esCoherente(int endeudamiento, String ahorro) {
+        int margen = Math.max(0, 100 - endeudamiento);
+        return switch (ahorro.toLowerCase()) {
+            case "alta" -> margen >= 40;
+            case "media" -> margen >= 20;
+            case "baja" -> margen >= 5;
+            case "nula" -> true;
+            default -> false;
+        };
+    }
+
     public AnalisisFinancieroService(@Value("${servicio.ia.url:http://localhost:8000}") String servicioIaUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(servicioIaUrl)
                 .build();
+    }
+
+    private String determinarFrecuenciaAhorro(double ratioAhorro) {
+        if (ratioAhorro >= 0.40) return "Alta";
+        if (ratioAhorro >= 0.20) return "Media";
+        if (ratioAhorro >= 0.05) return "Baja";
+        return "Nula";
+    }
+
+    private int calcularPuntosAhorro(String ahorroStr) {
+        if (ahorroStr == null) return 0;
+        return switch (ahorroStr.toLowerCase()) {
+            case "alta" -> 30;
+            case "media" -> 20;
+            case "baja" -> 10;
+            default -> 0;
+        };
+    }
+
+    private int calcularPuntosEndeudamiento(Integer nivelEndeudamiento) {
+        if (nivelEndeudamiento == null) return 0;
+        if (nivelEndeudamiento < 30) return 30;
+        if (nivelEndeudamiento <= 50) return 20;
+        if (nivelEndeudamiento <= 70) return 10;
+        return 0;
+    }
+
+    private int calcularPuntosGasto(double porcentajeGasto) {
+        if (porcentajeGasto < 30) return 40;
+        if (porcentajeGasto <= 60) return 20;
+        return 5;
+    }
+
+    public AnalisisRequest validarYCompletarRequest(AnalisisRequest request) {
+        double ingreso = request.ingresoMensual() != null && request.ingresoMensual() > 0 ? request.ingresoMensual() : 1.0;
+        
+        double totalGastos = 0.0;
+        if (request.transacciones() != null) {
+            for (TransaccionDTO t : request.transacciones()) {
+                if (t.valor() != null) {
+                    totalGastos += t.valor();
+                }
+            }
+        }
+
+        Integer endeudamiento = request.nivelEndeudamiento();
+        String ahorro = request.frecuenciaAhorro();
+
+        // Auto-cálculo si el usuario no los envió explícitamente
+        if (endeudamiento == null || ahorro == null || ahorro.isEmpty()) {
+            double end = Math.round((totalGastos / ingreso) * 100.0);
+            endeudamiento = (int) end;
+            
+            double margenLibre = ingreso - totalGastos;
+            double ratioAhorro = margenLibre / ingreso;
+            ahorro = determinarFrecuenciaAhorro(ratioAhorro);
+        } else {
+            // Validación Manual (Margen de error del 20%)
+            int porcentajeGastos = (int) Math.round((totalGastos / ingreso) * 100);
+            
+            if (Math.abs(endeudamiento - porcentajeGastos) > 20) {
+                throw new IllegalArgumentException(String.format("Incoherencia detectada: Tu nivel de endeudamiento declarado (%d%%) difiere demasiado de tus gastos reales registrados (%d%%). Solo se permite un margen de aproximación del 20%%.", endeudamiento, porcentajeGastos));
+            }
+
+            if (!esCoherente(endeudamiento, ahorro)) {
+                int margenLibre = Math.max(0, 100 - endeudamiento);
+                throw new IllegalArgumentException(String.format("Incoherencia detectada: Declaras un endeudamiento del %d%%, lo cual deja un margen libre del %d%%. Matemáticamente esto no alcanza para sostener una frecuencia de ahorro '%s'.", 
+                        endeudamiento, margenLibre, ahorro));
+            }
+        }
+
+        return new AnalisisRequest(
+                request.ingresoMensual(),
+                endeudamiento,
+                ahorro,
+                request.transacciones()
+        );
+    }
+
+    public int calcularPuntaje(AnalisisRequest datos) {
+        int puntaje = 0;
+        puntaje += calcularPuntosAhorro(datos.frecuenciaAhorro());
+        puntaje += calcularPuntosEndeudamiento(datos.nivelEndeudamiento());
+
+        double totalGastosRecientes = 0.0;
+        if (datos.transacciones() != null) {
+            for (TransaccionDTO t : datos.transacciones()) {
+                if (t.valor() != null) totalGastosRecientes += t.valor();
+            }
+        }
+        
+        double ingreso = datos.ingresoMensual() != null && datos.ingresoMensual() > 0 ? datos.ingresoMensual() : 1.0;
+        double porcentajeGasto = (totalGastosRecientes / ingreso) * 100;
+        
+        puntaje += calcularPuntosGasto(porcentajeGasto);
+        return puntaje;
     }
 
     public String realizarPrediccionInterna(Object payload) {
@@ -33,16 +140,13 @@ public class AnalisisFinancieroService {
                     .retrieve()
                     .body(String.class);
         } catch (Exception e) {
-            //Se manda a imprimir el error en color rojo para saber que paso antes de mandar la respuesta por defecto
+            // Se manda a imprimir el error en color rojo para saber que paso antes de mandar la respuesta por defecto
             logger.error("Se cayo la conexion con Python en prediccion Interna: " + e.getMessage());
 
-            // Simulamos una respuesta realista para que el Front-End pueda hacer pruebas 
-            // sin depender de Data Science.
-            if (payload instanceof com.alura.finance_ai.dto.AnalisisRequest req) {
-                if (req.nivelEndeudamiento() != null) {
-                    if (req.nivelEndeudamiento() < 30) return "Saludable";
-                    if (req.nivelEndeudamiento() > 70) return "En Riesgo";
-                }
+            // Simulamos una respuesta usando la lógica del requerimiento solicitada
+            if (payload instanceof AnalisisRequest req) {
+                int puntaje = calcularPuntaje(req);
+                return (puntaje >= 80) ? "Excelente" : (puntaje >= 50) ? "Estable" : (puntaje >= 30) ? "En Riesgo" : "Crítico";
             }
             return "En Observacion";
         }
@@ -108,8 +212,24 @@ public class AnalisisFinancieroService {
                 );
             } else if (perfilPython.equalsIgnoreCase("En Observacion")) {
                 recomendaciones.add(
-                        "Atención: Sus gastos actuales están consumiendo la mayor parte de sus ingresos. Recomendamos considerar moderar gastos."
+                        "Atención: Tus obligaciones financieras declaradas están consumiendo la mayor parte de tus ingresos. Recomendamos considerar moderar gastos."
                 );
+            }
+        }
+
+        if (request.transacciones() != null && request.ingresoMensual() != null && request.ingresoMensual() > 0) {
+            double totalGastosRegistrados = 0.0;
+            for (TransaccionDTO t : request.transacciones()) {
+                if (t.valor() != null && t.valor() > 0) {
+                    totalGastosRegistrados += t.valor();
+                }
+            }
+            int porcentajeGastos = (int) Math.round((totalGastosRegistrados / request.ingresoMensual()) * 100);
+            
+            if (porcentajeGastos > 100) {
+                recomendaciones.add(String.format("¡Atención! Tus gastos actuales representan un %d%% de tus ingresos. Si no recibes ayuda externa, estás en grave riesgo de sobreendeudamiento.", porcentajeGastos));
+            } else if (porcentajeGastos < 20) {
+                recomendaciones.add(String.format("Tus gastos registrados representan solo un %d%% de tus ingresos. ¡Excelente capacidad para ahorrar e invertir!", porcentajeGastos));
             }
         }
 
@@ -126,7 +246,7 @@ public class AnalisisFinancieroService {
         }
 
         String ahorro = request.frecuenciaAhorro();
-        if (ahorro != null && (ahorro.equalsIgnoreCase("Baja") || ahorro.equalsIgnoreCase("Nulo"))) {
+        if (ahorro != null && (ahorro.equalsIgnoreCase("Baja") || ahorro.equalsIgnoreCase("Nula") || ahorro.equalsIgnoreCase("Nulo"))) {
             recomendaciones.add(
                     "Aumentar la frecuencia de ahorro ayudaría a mejorar tu perfil financiero y tener mejores oportunidades a futuro"
             );
