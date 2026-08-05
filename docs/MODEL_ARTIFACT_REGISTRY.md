@@ -1,6 +1,6 @@
 # Model artifacts in Google Artifact Registry
 
-The two inference models are published together as one versioned generic artifact. The archive contains both `.pkl` files and a `SHA256SUMS` checksum file.
+The two inference models are published together as one versioned generic artifact. The archive contains both `.pkl` files and a `SHA256SUMS` checksum file. The data-science service keeps that manifest beside the models and verifies both SHA-256 digests before deserializing anything; startup fails if the manifest is missing or a model has changed.
 
 Create a Generic repository once, then authenticate with `gcloud auth application-default login` (or the service account used by CI):
 

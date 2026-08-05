@@ -1,4 +1,6 @@
 import logging
+import hashlib
+import hmac
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import date
@@ -25,6 +27,11 @@ logger = logging.getLogger("financeai.data_science")
 MODELS_DIR = Path(__file__).parent / "models"
 CLASIFICADOR_GASTOS_PATH = MODELS_DIR / "clasificador_gastos.pkl"
 PERFIL_FINANCIERO_PATH = MODELS_DIR / "perfil_financiero.pkl"
+MODEL_CHECKSUMS_PATH = MODELS_DIR / "SHA256SUMS"
+MODEL_FILES = {
+    "clasificador_gastos.pkl": CLASIFICADOR_GASTOS_PATH,
+    "perfil_financiero.pkl": PERFIL_FINANCIERO_PATH,
+}
 
 # Diccionario en memoria donde viven los modelos ya cargados
 modelos: dict = {}
@@ -45,10 +52,56 @@ def cargar_modelo(path: Path):
     return joblib.load(path)
 
 
+def verificar_integridad_modelos() -> None:
+    """Verifica los modelos contra el manifiesto SHA-256 antes de cargarlos."""
+    if not MODEL_CHECKSUMS_PATH.is_file():
+        raise FileNotFoundError(
+            f"No se encontro el manifiesto de integridad: {MODEL_CHECKSUMS_PATH}"
+        )
+
+    checksums: dict[str, str] = {}
+    for line_number, raw_line in enumerate(
+        MODEL_CHECKSUMS_PATH.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = line.split()
+        if len(fields) != 2 or len(fields[0]) != 64:
+            raise ValueError(
+                f"Entrada invalida en {MODEL_CHECKSUMS_PATH}:{line_number}"
+            )
+        digest, filename = fields
+        filename = filename.lstrip("*")
+        if filename not in MODEL_FILES or filename in checksums:
+            raise ValueError(
+                f"Archivo inesperado o duplicado en {MODEL_CHECKSUMS_PATH}:{line_number}"
+            )
+        checksums[filename] = digest.lower()
+
+    missing_entries = set(MODEL_FILES) - set(checksums)
+    if missing_entries:
+        raise ValueError(
+            f"Faltan checksums para: {', '.join(sorted(missing_entries))}"
+        )
+
+    for filename, path in MODEL_FILES.items():
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        digest = hashlib.sha256()
+        with path.open("rb") as model_file:
+            for chunk in iter(lambda: model_file.read(1024 * 1024), b""):
+                digest.update(chunk)
+        if not hmac.compare_digest(digest.hexdigest(), checksums[filename]):
+            raise ValueError(f"La integridad de {path} no pudo ser verificada")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: cargar modelos una sola vez al arrancar la app
     try:
+        verificar_integridad_modelos()
+        logger.info("Integridad de los modelos verificada correctamente")
         modelos["clasificador_gastos"] = cargar_modelo(CLASIFICADOR_GASTOS_PATH)
         modelos["perfil_financiero"] = cargar_modelo(PERFIL_FINANCIERO_PATH)
         logger.info("Modelos cargados correctamente: %s", list(modelos.keys()))

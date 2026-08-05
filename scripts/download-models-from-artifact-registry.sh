@@ -32,5 +32,5 @@ tar -xzf "${ARCHIVE}" -C "${WORK_DIR}"
 (cd "${WORK_DIR}" && if command -v sha256sum >/dev/null; then sha256sum -c SHA256SUMS; else shasum -a 256 -c SHA256SUMS; fi)
 
 mkdir -p "${DEST_DIR}"
-cp "${WORK_DIR}/clasificador_gastos.pkl" "${WORK_DIR}/perfil_financiero.pkl" "${DEST_DIR}/"
+cp "${WORK_DIR}/clasificador_gastos.pkl" "${WORK_DIR}/perfil_financiero.pkl" "${WORK_DIR}/SHA256SUMS" "${DEST_DIR}/"
 echo "Downloaded ${PACKAGE}@${VERSION} into ${DEST_DIR}"
