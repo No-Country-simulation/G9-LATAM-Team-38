@@ -56,6 +56,7 @@ export default function Home() {
   const [nuevoMonto, setNuevoMonto] = useState<string>("");
 
   const [mostrarMiembros, setMostrarMiembros] = useState<boolean>(false);
+  const [cargando, setCargando] = useState<boolean>(false);
 
   const [endeudamientoAuto, setEndeudamientoAuto] = useState<string>("0");
   const [frecuenciaAhorroAuto, setFrecuenciaAhorroAuto] = useState<string>("Media");
@@ -154,11 +155,16 @@ export default function Home() {
   };
 
   const ejecutarAnalisis = async () => {
+    setResultado(null); 
+    setMensajeAdvertencia(null);
+    setCargando(true);
+    
     const ingreso = parseFloat(ingresoMensual) || 0;
     
     // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
     if (modoIngresoDatos === null) {
       setMostrarModalModo(true);
+      setCargando(false);
       return;
     }
     
@@ -177,13 +183,15 @@ export default function Home() {
       const end = parseFloat(endeudamientoManual);
       if (isNaN(end) || end < 0) {
         setMensajeAdvertencia("El nivel de endeudamiento debe ser un número válido mayor o igual a 0.");
+        setCargando(false);
         return;
       }
       nivelEndeudamiento = end;
       
       const frec = frecuenciaAhorroManual.trim().toLowerCase();
-      if (!["alta", "media", "baja", "nula"].includes(frec)) {
-        setMensajeAdvertencia("La frecuencia de ahorro debe ser Alta, Media, Baja o Nula.");
+      if (!["muy alta", "alta", "media", "baja", "nula"].includes(frec)) {
+        setMensajeAdvertencia("La frecuencia de ahorro debe ser Muy alta, Alta, Media, Baja o Nula.");
+        setCargando(false);
         return;
       }
       frecuenciaAhorro = frecuenciaAhorroManual;
@@ -211,6 +219,7 @@ export default function Home() {
       
       if (data.success === false || data.error) {
         setMensajeAdvertencia(data.error || "Datos financieros inválidos.");
+        setCargando(false);
         return;
       }
 
@@ -250,6 +259,8 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       setMensajeAdvertencia(`Oops! Ocurrió un error al intentar conectarse con el Backend en ${API_BASE_URL}`);
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -411,12 +422,13 @@ export default function Home() {
                       <select
                         value={frecuenciaAhorroManual}
                         onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
-                        className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4]`}
+                        className={`w-full ${themeStyles.inputBg} border ${themeStyles.inputBorder} rounded-lg px-3 py-1.5 text-xs font-semibold ${themeStyles.inputText} focus:outline-none focus:border-[#8DA9C4] appearance-none cursor-pointer`}
                       >
+                        <option value="Muy alta">Muy alta</option>
                         <option value="Alta">Alta</option>
                         <option value="Media">Media</option>
                         <option value="Baja">Baja</option>
-                        <option value="Nula">Nula</option>
+                        <option value="Nula">Muy baja / Nula</option>
                       </select>
                     ) : (
                       <input
@@ -505,7 +517,14 @@ export default function Home() {
               <h3 className={`${themeStyles.textMuted} font-bold tracking-widest text-[11px] uppercase`}>Resultado</h3>
             </div>
             
-            {!resultado ? (
+            {cargando ? (
+              <div className={`flex-1 border border-dashed ${themeStyles.inputBorder} rounded-xl flex flex-col items-center justify-center p-6 text-center`}>
+                <div className="w-8 h-8 border-4 border-[#8DA9C4] border-t-transparent rounded-full animate-spin mb-3"></div>
+                <span className={`${themeStyles.textMuted} text-xs font-medium animate-pulse`}>
+                  Analizando datos financieros...
+                </span>
+              </div>
+            ) : !resultado ? (
               <div className={`flex-1 border border-dashed ${themeStyles.inputBorder} rounded-xl flex flex-col items-center justify-center p-6 text-center`}>
                 <AlertCircle size={26} className="opacity-30 mb-2" />
                 <span className={`${themeStyles.textMuted} text-xs font-medium`}>

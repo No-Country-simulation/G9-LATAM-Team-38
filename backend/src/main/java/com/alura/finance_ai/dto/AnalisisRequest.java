@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -16,6 +17,9 @@ public record AnalisisRequest(
         Integer nivelEndeudamiento, // La intencion es que si no proporcionan el dato se calcule de manera automatica
 
         @JsonProperty("frecuencia_ahorro")
+        @Pattern(regexp = "^(Nula|Muy baja|Baja|Media|Alta|Muy alta)$",
+                message = "La frecuencia de ahorro debe ser estrictamente una de las siguientes: 'Nula', 'Muy baja', 'Baja', " +
+                "'Media', 'Alta', 'Muy alta'")
         String frecuenciaAhorro,     // Si no lo agregan proporcionaremos el dato nosotros
 
         @NotEmpty @Valid List<TransaccionDTO> transacciones

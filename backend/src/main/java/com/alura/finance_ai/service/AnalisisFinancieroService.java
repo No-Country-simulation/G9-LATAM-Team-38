@@ -19,13 +19,15 @@ public class AnalisisFinancieroService {
 
     private final RestClient restClient;
 
+    
     private boolean esCoherente(int endeudamiento, String ahorro) {
         int margen = Math.max(0, 100 - endeudamiento);
         return switch (ahorro.toLowerCase()) {
-            case "alta" -> margen >= 40;
-            case "media" -> margen >= 20;
+            case "muy alta" -> margen >= 35;
+            case "alta" -> margen >= 26;
+            case "media" -> margen >= 15;
             case "baja" -> margen >= 5;
-            case "nula" -> true;
+            case "muy baja", "nula" -> true;
             default -> false;
         };
     }
@@ -37,18 +39,22 @@ public class AnalisisFinancieroService {
     }
 
     private String determinarFrecuenciaAhorro(double ratioAhorro) {
-        if (ratioAhorro >= 0.40) return "Alta";
-        if (ratioAhorro >= 0.20) return "Media";
-        if (ratioAhorro >= 0.05) return "Baja";
+        double porcentaje = ratioAhorro * 100;
+        if (porcentaje >= 35) return "Muy alta";
+        if (porcentaje >= 26) return "Alta";
+        if (porcentaje >= 15) return "Media";
+        if (porcentaje >= 5) return "Baja";
         return "Nula";
     }
 
     private int calcularPuntosAhorro(String ahorroStr) {
         if (ahorroStr == null) return 0;
         return switch (ahorroStr.toLowerCase()) {
+            case "muy alta" -> 40;
             case "alta" -> 30;
             case "media" -> 20;
             case "baja" -> 10;
+            case "muy baja", "nula" -> 0;
             default -> 0;
         };
     }
@@ -91,17 +97,16 @@ public class AnalisisFinancieroService {
             double ratioAhorro = margenLibre / ingreso;
             ahorro = determinarFrecuenciaAhorro(ratioAhorro);
         } else {
-            // Validación Manual (Margen de error del 20%)
+            // Guard Clause 1: Tolerancia de 10%
             int porcentajeGastos = (int) Math.round((totalGastos / ingreso) * 100);
-            
-            if (Math.abs(endeudamiento - porcentajeGastos) > 20) {
-                throw new IllegalArgumentException(String.format("Incoherencia detectada: Tu nivel de endeudamiento declarado (%d%%) difiere demasiado de tus gastos reales registrados (%d%%). Solo se permite un margen de aproximación del 20%%.", endeudamiento, porcentajeGastos));
+            if (Math.abs(endeudamiento - porcentajeGastos) > 10) {
+                throw new IllegalArgumentException(String.format("Incoherencia detectada: Tu nivel de endeudamiento declarado (%d%%) difiere demasiado de tus gastos reales registrados (%d%%). Solo se permite un margen de aproximación del 10%%.", endeudamiento, porcentajeGastos));
             }
 
+            // Guard Clause 2: Coherencia matemática de ahorro
             if (!esCoherente(endeudamiento, ahorro)) {
                 int margenLibre = Math.max(0, 100 - endeudamiento);
-                throw new IllegalArgumentException(String.format("Incoherencia detectada: Declaras un endeudamiento del %d%%, lo cual deja un margen libre del %d%%. Matemáticamente esto no alcanza para sostener una frecuencia de ahorro '%s'.", 
-                        endeudamiento, margenLibre, ahorro));
+                throw new IllegalArgumentException(String.format("Incoherencia detectada: Declaras un endeudamiento del %d%%, lo cual deja un margen libre del %d%%. Matemáticamente esto no alcanza para sostener una frecuencia de ahorro '%s'.", endeudamiento, margenLibre, ahorro));
             }
         }
 
@@ -230,6 +235,10 @@ public class AnalisisFinancieroService {
                 recomendaciones.add(String.format("¡Atención! Tus gastos actuales representan un %d%% de tus ingresos. Si no recibes ayuda externa, estás en grave riesgo de sobreendeudamiento.", porcentajeGastos));
             } else if (porcentajeGastos < 20) {
                 recomendaciones.add(String.format("Tus gastos registrados representan solo un %d%% de tus ingresos. ¡Excelente capacidad para ahorrar e invertir!", porcentajeGastos));
+            }
+            
+            if (request.nivelEndeudamiento() != null && Math.abs(request.nivelEndeudamiento() - porcentajeGastos) > 0) {
+                recomendaciones.add(String.format("Nota: Has declarado un endeudamiento del %d%%, pero según tus ingresos y transacciones recientes, tu verdadero nivel de endeudamiento es del %d%%.", request.nivelEndeudamiento(), porcentajeGastos));
             }
         }
 

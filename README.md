@@ -44,3 +44,22 @@ Este proyecto sigue la guía de convenciones del equipo (`Guia_Completa_Convenci
 - Carpetas y archivos en `snake_case` (ej. `data_science/`)
 - Branches con guiones medios, sin slash (ej. `feature-user-auth`)
 - Conventional Commits para los mensajes de commit
+
+## Prueba aislada en Postman
+
+El entrypoint raíz levanta por defecto el modo `model-free`, por lo que la prueba no depende de modelos entrenados ni de una base de datos.
+
+1. Inicia el API desde la raíz del proyecto:
+
+   ```bash
+   python3 -m uvicorn main:app --host 127.0.0.1 --port 8000
+   ```
+
+2. Importa en Postman la colección [`docs/postman/FinanceAI-local.postman_collection.json`](docs/postman/FinanceAI-local.postman_collection.json).
+3. Ejecuta las solicitudes `Health - API disponible sin modelos` y `Predict internal - contrato de red aislado`.
+
+La segunda solicitud usa `POST http://localhost:8000/predict-internal` y debe devolver `200 OK`, `mode: "model-free"` y `models_loaded: false`. Para activar inferencia real se debe iniciar con `ENABLE_MODEL_API=1`; esa ejecución sí requiere los modelos disponibles.
+
+## Model artifacts
+
+The trained model files can be stored and restored as a versioned generic artifact in Google Artifact Registry. See [docs/MODEL_ARTIFACT_REGISTRY.md](docs/MODEL_ARTIFACT_REGISTRY.md) and the scripts in `scripts/`.
