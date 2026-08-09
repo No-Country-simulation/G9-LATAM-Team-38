@@ -3,34 +3,52 @@
 @theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Nuevos colores semánticos globales */
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-card: var(--brand-card);
+  --color-brand-text: var(--brand-text);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+  --color-brand-border: var(--brand-border);
 }
 
 :root {
-  --background: #0f172a; /* slate-900 */
-  --foreground: #f8fafc; /* slate-50 */
-  --card: rgba(30, 41, 59, 0.7); /* slate-800 translucent */
-  --card-border: rgba(255, 255, 255, 0.1);
-  --primary: #14b8a6; /* teal-500 */
-  --primary-hover: #0d9488; /* teal-600 */
-  --secondary: #2dd4bf; /* teal-400 */
+  /* Tema Claro (Light Mode) */
+  --brand-bg: #F4F7F9; /* Gris muy claro azulado */
+  --brand-card: #FFFFFF; /* Blanco puro para tarjetas */
+  --brand-text: #0B2545; /* Azul muy oscuro para texto principal */
+  --brand-muted: #476A8A; /* Azul grisáceo para texto secundario */
+  --brand-accent: #8DA9C4; /* Azul claro acento */
+  --brand-accent-hover: #6F92B3; /* Azul acento más oscuro para hover */
+  --brand-border: rgba(11, 37, 69, 0.15); /* Borde sutil oscuro */
+}
+
+.dark {
+  /* Tema Oscuro (Dark Mode) - El favorito actual */
+  --brand-bg: #0B2545; 
+  --brand-card: #134074;
+  --brand-text: #EEF4ED;
+  --brand-muted: rgba(238, 244, 237, 0.6); /* #EEF4ED/60 */
+  --brand-accent: #8DA9C4;
+  --brand-accent-hover: #13315C;
+  --brand-border: rgba(141, 169, 196, 0.15); /* #8DA9C4/15 */
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--brand-bg);
+  color: var(--brand-text);
   font-family: Arial, Helvetica, sans-serif;
-  background-image: 
-        radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.5) 0px, transparent 50%);
-  background-attachment: fixed;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer utilities {
   .glass-card {
-    background-color: var(--card);
+    background-color: var(--brand-card);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--card-border);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--brand-border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 }

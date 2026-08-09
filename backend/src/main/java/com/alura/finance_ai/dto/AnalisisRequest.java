@@ -20,7 +20,7 @@ public record AnalisisRequest(
         @Pattern(regexp = "^(Nula|Muy baja|Baja|Media|Alta|Muy alta)$",
                 message = "La frecuencia de ahorro debe ser estrictamente una de las siguientes: 'Nula', 'Muy baja', 'Baja', " +
                 "'Media', 'Alta', 'Muy alta'")
-        String frecuenciaAhorro,     // Si no lo agregan proporcionaremos el dato nosotros
+        String frecuenciaAhorro,    
 
         @NotEmpty @Valid List<TransaccionDTO> transacciones
 ) {
