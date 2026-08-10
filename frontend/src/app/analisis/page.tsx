@@ -822,77 +822,77 @@ export default function Home() {
       {/* HIDDEN PDF TEMPLATE PARA REPORTE EMPRESARIAL */}
       {resultado && (
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
-          <div id="pdf-report-template" className="bg-white text-slate-900 font-sans p-12 box-border relative" style={{ width: '800px', minHeight: '1131px' }}>
+          <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative" style={{ width: '800px', minHeight: '1131px' }}>
             {/* Header */}
-            <div className="flex justify-between items-end border-b-4 border-blue-900 pb-4 mb-8">
+            <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
               <div>
-                <h1 className="text-4xl font-extrabold text-blue-950 tracking-tight">FINANCE AI</h1>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
+                <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
+                <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
               </div>
-              <div className="text-right text-xs text-slate-500 font-medium">
+              <div className="text-right text-xs text-[#64748b] font-medium">
                 <p>Generado el: {new Date().toLocaleDateString()}</p>
-                <p>Usuario: <span className="font-bold text-slate-700">{username || 'N/A'}</span></p>
+                <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
                 <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
               </div>
             </div>
 
             {/* Resumen Ejecutivo */}
-            <h2 className="text-xl font-bold text-blue-900 mb-4 border-l-4 border-blue-600 pl-3">Resumen Ejecutivo</h2>
+            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-1">Ingresos Declarados</p>
-                <p className="text-2xl font-black text-slate-800">${parseFloat(ingresoMensual).toLocaleString()}</p>
+              <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
+                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
+                <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
               </div>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-1">Gastos Identificados</p>
-                <p className="text-2xl font-black text-slate-800">${resultado.totalGastos.toLocaleString()}</p>
+              <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
+                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
+                <p className="text-2xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
-                <p className="text-xs text-blue-600 font-bold uppercase mb-1">Balance / Flujo</p>
-                <p className="text-2xl font-black text-blue-900">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
+              <div className="bg-[#eff6ff] p-4 rounded-lg border border-[#bfdbfe] shadow-sm">
+                <p className="text-xs text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
+                <p className="text-2xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
               </div>
             </div>
 
             {/* Diagnostico */}
-            <h2 className="text-xl font-bold text-blue-900 mb-4 border-l-4 border-blue-600 pl-3">Diagnóstico Financiero</h2>
+            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
             <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col justify-center">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-1">Estado de Salud</p>
-                <p className="text-lg font-bold text-slate-800">{resultado.estado}</p>
-                <p className="text-sm text-slate-600 mt-1 line-clamp-2">{resultado.mensaje}</p>
+              <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
+                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
+                <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
+                <p className="text-sm text-[#475569] mt-1 line-clamp-2">{resultado.mensaje}</p>
               </div>
-              <div className="text-center bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Endeudamiento</p>
-                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-rose-500">
-                  <span className="text-xl font-black text-rose-600">{resultado.endeudamiento}%</span>
+              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0]">
+                <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
+                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-[#f43f5e]">
+                  <span className="text-xl font-black text-[#e11d48]">{resultado.endeudamiento}%</span>
                 </div>
               </div>
-              <div className="text-center bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Capacidad Ahorro</p>
-                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-emerald-500">
-                  <span className="text-sm font-black text-emerald-600 px-1 leading-none">{resultado.frecuenciaAhorroText}</span>
+              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0]">
+                <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
+                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-[#10b981]">
+                  <span className="text-sm font-black text-[#059669] px-1 leading-none">{resultado.frecuenciaAhorroText}</span>
                 </div>
               </div>
             </div>
 
             {/* Desglose de Gastos */}
-            <h2 className="text-xl font-bold text-blue-900 mb-4 border-l-4 border-blue-600 pl-3">Desglose de Movimientos</h2>
-            <div className="mb-8 overflow-hidden rounded-lg border border-slate-200">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-100 text-xs uppercase font-bold text-slate-700">
+            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
+            <div className="mb-8 overflow-hidden rounded-lg border border-[#e2e8f0]">
+              <table className="w-full text-left text-sm text-[#475569]">
+                <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
                   <tr>
-                    <th className="px-4 py-3 border-b">Concepto</th>
-                    <th className="px-4 py-3 border-b text-right">Monto</th>
-                    <th className="px-4 py-3 border-b text-right">Impacto (%)</th>
+                    <th className="px-4 py-3 border-b border-[#e2e8f0]">Concepto</th>
+                    <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Monto</th>
+                    <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#f1f5f9]">
                   {resultado.desglose.map((item, idx) => (
-                    <tr key={idx} className="bg-white">
-                      <td className="px-4 py-2.5 font-medium text-slate-800">{item.descripcion}</td>
+                    <tr key={idx} className="bg-[#ffffff]">
+                      <td className="px-4 py-2.5 font-medium text-[#1e293b]">{item.descripcion}</td>
                       <td className="px-4 py-2.5 text-right font-bold">${item.monto.toLocaleString()}</td>
                       <td className="px-4 py-2.5 text-right">
-                        <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
+                        <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
                       </td>
                     </tr>
                   ))}
@@ -901,15 +901,15 @@ export default function Home() {
             </div>
 
             {/* Recomendaciones de IA */}
-            <h2 className="text-xl font-bold text-blue-900 mb-4 border-l-4 border-blue-600 pl-3">Plan de Acción / Sugerencias IA</h2>
-            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-5 mb-8">
+            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
+            <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
               <ul className="space-y-3">
                 {resultado.recomendaciones.map((rec, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-5 h-5 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 text-xs font-black">{index + 1}</div>
+                      <div className="w-5 h-5 rounded-full bg-[#c7d2fe] flex items-center justify-center text-[#4338ca] text-xs font-black">{index + 1}</div>
                     </div>
-                    <p className="text-indigo-950 text-sm font-medium leading-relaxed">{rec}</p>
+                    <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
                   </li>
                 ))}
               </ul>
@@ -917,11 +917,11 @@ export default function Home() {
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 w-full p-8">
-              <div className="border-t border-slate-200 pt-4 flex justify-between items-center text-xs text-slate-400 font-medium">
+              <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
                 <p>Documento confidencial generado por inteligencia artificial.</p>
                 <p className="flex items-center gap-1"><Zap size={12} /> G9 LATAM Team 38</p>
               </div>
-              <div className="h-4 w-full bg-blue-900 absolute bottom-0 left-0"></div>
+              <div className="h-4 w-full bg-[#1e3a8a] absolute bottom-0 left-0"></div>
             </div>
           </div>
         </div>
