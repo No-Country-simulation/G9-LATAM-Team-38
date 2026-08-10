@@ -348,12 +348,12 @@ export default function Home() {
       <div className="w-full max-w-7xl mx-auto my-1 flex-1 flex flex-col justify-center min-h-0">
         
         {/* BANNER SUPERIOR */}
-        <div className={`bg-[var(--brand-accent-hover)] border border-[var(--brand-border)] rounded-t-2xl px-5 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center relative shadow-lg flex-shrink-0 transition-colors duration-300`}>
+        <div className={`bg-[var(--brand-banner-bg)] border border-[var(--brand-border)] rounded-t-2xl px-5 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center relative shadow-lg flex-shrink-0 transition-colors duration-300`}>
           <div className="z-10">
             <div className={`text-[var(--brand-accent)] text-[9px] font-bold tracking-widest uppercase mb-0.5`}>
               ANÁLISIS FINANCIERO
             </div>
-            <h2 className={`text-sm md:text-lg font-bold flex items-center gap-2 text-[var(--brand-text)]`}>
+            <h2 className={`text-sm md:text-lg font-bold flex items-center gap-2 text-[var(--brand-banner-text)]`}>
               <Zap size={18} className={`text-[var(--brand-accent)] fill-[var(--brand-accent)]/20 stroke-[2.5]`} />
               Conoce recomendaciones y tu salud financiera
             </h2>
@@ -361,7 +361,7 @@ export default function Home() {
 
           <div className="z-10 mt-1 sm:mt-0 flex items-center gap-2 bg-[#0B2545]/20 border border-[var(--brand-border)] px-3 py-1 rounded-full">
             <div className="w-2 h-2 rounded-full bg-[var(--brand-accent)] animate-pulse"></div>
-            <span className={`text-[11px] font-mono text-[var(--brand-text)] font-semibold flex items-center gap-1.5`}>
+            <span className={`text-[11px] font-mono text-[var(--brand-banner-text)] font-semibold flex items-center gap-1.5`}>
               <Send size={11} className="text-[var(--brand-accent)]" />
               /Analisis-Financiero
             </span>

@@ -23,6 +23,8 @@
   --brand-accent: #D62828;
   --brand-accent-hover: #003049;
   --brand-border: rgba(0, 48, 73, 0.2);
+  --brand-banner-bg: #003049;
+  --brand-banner-text: #EAE2B7;
 }
 
 .dark {
@@ -34,6 +36,8 @@
   --brand-accent: #F77F00;
   --brand-accent-hover: #FCBF49;
   --brand-border: rgba(247, 127, 0, 0.3);
+  --brand-banner-bg: #001f30;
+  --brand-banner-text: #FCBF49;
 }
 
 body {
