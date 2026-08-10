@@ -16,24 +16,24 @@
 
 :root {
   /* Tema Claro (Light Mode) */
-  --brand-bg: #F4F7F9; /* Gris muy claro azulado */
-  --brand-card: #FFFFFF; /* Blanco puro para tarjetas */
-  --brand-text: #0B2545; /* Azul muy oscuro para texto principal */
-  --brand-muted: #476A8A; /* Azul grisáceo para texto secundario */
-  --brand-accent: #8DA9C4; /* Azul claro acento */
-  --brand-accent-hover: #6F92B3; /* Azul acento más oscuro para hover */
-  --brand-border: rgba(11, 37, 69, 0.15); /* Borde sutil oscuro */
+  --brand-bg: #EAE2B7;
+  --brand-card: #F4F1DE;
+  --brand-text: #003049;
+  --brand-muted: rgba(0, 48, 73, 0.8);
+  --brand-accent: #D62828;
+  --brand-accent-hover: #003049;
+  --brand-border: rgba(0, 48, 73, 0.2);
 }
 
 .dark {
   /* Tema Oscuro (Dark Mode) - El favorito actual */
-  --brand-bg: #0B2545; 
-  --brand-card: #134074;
-  --brand-text: #EEF4ED;
-  --brand-muted: rgba(238, 244, 237, 0.6); /* #EEF4ED/60 */
-  --brand-accent: #8DA9C4;
-  --brand-accent-hover: #13315C;
-  --brand-border: rgba(141, 169, 196, 0.15); /* #8DA9C4/15 */
+  --brand-bg: #003049; 
+  --brand-card: #002538;
+  --brand-text: #EAE2B7;
+  --brand-muted: rgba(234, 226, 183, 0.7);
+  --brand-accent: #F77F00;
+  --brand-accent-hover: #FCBF49;
+  --brand-border: rgba(247, 127, 0, 0.3);
 }
 
 body {
