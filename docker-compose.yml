@@ -5,24 +5,39 @@ networks:
 services:
 
   # Microservicio Python (FastAPI) — Modelo 1 + Modelo 2, puerto interno 8000
-  data-science:
-    build:
-      context: ./data_science
-      dockerfile: Dockerfile
-    container_name: financeai-data-science
-    env_file:
-      - .env
+  # data-science:
+  #   build:
+  #     context: ./data_science
+  #     dockerfile: Dockerfile
+  #   container_name: financeai-data-science
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - financeai-network
+  #   # No se publica al host: solo Backend lo consume dentro de la red interna de Docker
+  #   expose:
+  #     - "8000"
+  #   healthcheck:
+  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 15s
+  #   restart: unless-stopped
+
+  # Base de Datos MySQL
+  db:
+    image: mysql:8.0
+    container_name: financeai-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hackathon_finance_ai
+    ports:
+      - "3306:3306"
     networks:
       - financeai-network
-    # No se publica al host: solo Backend lo consume dentro de la red interna de Docker
-    expose:
-      - "8000"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+    volumes:
+      - mysql_data:/var/lib/mysql
     restart: unless-stopped
 
   # Backend Java/Spring Boot — expone la API pública en el puerto 8080
@@ -33,11 +48,31 @@ services:
     container_name: financeai-backend
     env_file:
       - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://financeai-db:3306/hackathon_finance_ai?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
     ports:
       - "8080:8080"
     networks:
       - financeai-network
     depends_on:
-      data-science:
-        condition: service_healthy
+      - db
     restart: unless-stopped
+
+  # Frontend Next.js — expone la UI pública en el puerto 3000
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: financeai-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - financeai-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
