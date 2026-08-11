@@ -313,7 +313,7 @@ export default function Home() {
         frecuenciaAhorroText: freqTextResult,
         frecuenciaAhorroNum: ahorroNum,
         estado: data.perfil_financiero || "Desconocido",
-        mensaje: "Análisis generado por el servidor Java (Spring Boot).",
+        mensaje: "Evaluación de riesgo crediticio y viabilidad financiera calculada mediante nuestro motor algorítmico.",
         totalGastos,
         recomendaciones: data.recomendaciones || [],
         desglose
@@ -660,18 +660,18 @@ export default function Home() {
         <div className={`w-full max-w-7xl mx-auto mb-2 bg-[var(--brand-card)] border border-[var(--brand-border)] rounded-xl p-3 shadow-xl transition-colors duration-300`}>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
             {miembrosEquipo.map((miembro, idx) => (
-              <div key={idx} className={`bg-[var(--brand-bg)] p-2 rounded-lg border border-[var(--brand-border)] flex flex-col justify-between`}>
-                <span className="font-bold text-[11px] truncate">{miembro.nombre}</span>
+              <div key={idx} className="bg-[var(--brand-card)] p-3 rounded-xl border border-[var(--brand-border)] flex flex-col justify-between shadow-lg hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] hover:border-[var(--brand-accent)] transition-all duration-300 group transform hover:-translate-y-1">
+                <span className="font-bold text-[11px] truncate text-[var(--brand-text)] group-hover:text-[var(--brand-accent)] transition-colors">{miembro.nombre}</span>
                 <div className="flex items-center gap-2 mt-2">
                   {miembro.linkedin && (
-                    <a href={miembro.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:opacity-80" title="LinkedIn">
+                    <a href={miembro.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:text-[var(--brand-text)] transition-transform duration-300 hover:scale-110" title="LinkedIn">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                       </svg>
                     </a>
                   )}
                   {miembro.github && (
-                    <a href={miembro.github} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:opacity-80" title="GitHub">
+                    <a href={miembro.github} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:text-[var(--brand-text)] transition-transform duration-300 hover:scale-110" title="GitHub">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                       </svg>
@@ -822,7 +822,8 @@ export default function Home() {
       {/* HIDDEN PDF TEMPLATE PARA REPORTE EMPRESARIAL */}
       {resultado && (
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
-          <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative" style={{ width: '800px', minHeight: '1131px' }}>
+          <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative flex flex-col" style={{ width: '794px', minHeight: '1123px' }}>
+            <div className="flex-1">
             {/* Header */}
             <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
               <div>
@@ -859,19 +860,17 @@ export default function Home() {
               <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
                 <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
                 <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
-                <p className="text-sm text-[#475569] mt-1 line-clamp-2">{resultado.mensaje}</p>
+                <p className="text-sm text-[#475569] mt-1">{resultado.mensaje}</p>
               </div>
-              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0]">
+              
+              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
                 <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
-                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-[#f43f5e]">
-                  <span className="text-xl font-black text-[#e11d48]">{resultado.endeudamiento}%</span>
-                </div>
+                <span className="text-3xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
               </div>
-              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0]">
+              
+              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
                 <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
-                <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 border-[#10b981]">
-                  <span className="text-sm font-black text-[#059669] px-1 leading-none">{resultado.frecuenciaAhorroText}</span>
-                </div>
+                <span className="text-2xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
               </div>
             </div>
 
@@ -905,23 +904,24 @@ export default function Home() {
             <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
               <ul className="space-y-3">
                 {resultado.recomendaciones.map((rec, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-5 h-5 rounded-full bg-[#c7d2fe] flex items-center justify-center text-[#4338ca] text-xs font-black">{index + 1}</div>
-                    </div>
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-[#4338ca] font-black text-sm flex-shrink-0 mt-[1px]">
+                      {index + 1}.
+                    </span>
                     <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
                   </li>
                 ))}
               </ul>
             </div>
+            </div>
 
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 w-full p-8">
+            <div className="w-full pt-8 mt-auto">
               <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
-                <p>Documento confidencial generado por inteligencia artificial.</p>
+                <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
                 <p className="flex items-center gap-1"><Zap size={12} /> G9 LATAM Team 38</p>
               </div>
-              <div className="h-4 w-full bg-[#1e3a8a] absolute bottom-0 left-0"></div>
+              <div className="h-4 w-[calc(100%+6rem)] bg-[#1e3a8a] absolute bottom-0 -ml-12"></div>
             </div>
           </div>
         </div>
