@@ -15,7 +15,7 @@ export function GlobalFooter({ children }: GlobalFooterProps) {
       <div className="flex items-center gap-4">
         {children}
         <div className="text-[var(--brand-muted)] opacity-70">
-          Versión 1.0.0
+          MVP Snapshot 0.0.1
         </div>
       </div>
     </footer>
