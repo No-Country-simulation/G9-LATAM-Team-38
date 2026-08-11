@@ -19,7 +19,7 @@ export function GlobalHeader({ username, onLogout }: GlobalHeaderProps) {
         </div>
         <div>
           <h1 className="text-base font-bold leading-none">Finance IA</h1>
-          <p className="text-[var(--brand-muted)] text-[11px] hidden sm:block mt-0.5">Diagnóstico financiero impulsado por IA</p>
+          <p className="text-[var(--brand-muted)] text-[11px] hidden sm:block mt-0.5">Conocer tus finanzas puede ser la diferencia entre tu nueva compra o tu nueva deuda.</p>
         </div>
       </div>
 

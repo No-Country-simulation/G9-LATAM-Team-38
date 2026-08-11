@@ -70,7 +70,7 @@ export default function FinanceForm({ onSubmit, isLoading }: FinanceFormProps) {
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="text-sm text-slate-300">Endeudamiento (0-100%)</label>
+                        <label className="text-sm text-slate-300">Endeudamiento (Automatico)</label>
                         <input 
                             type="number" 
                             required 
@@ -84,7 +84,7 @@ export default function FinanceForm({ onSubmit, isLoading }: FinanceFormProps) {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm text-slate-300">Frecuencia de Ahorro</label>
+                        <label className="text-sm text-slate-300">Frecuencia de Ahorro (Automatico)</label>
                         <select 
                             required 
                             className="w-full bg-slate-900/60 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all appearance-none"
