@@ -408,7 +408,7 @@ export default function Home() {
                     <input
                       type={modoIngresoDatos === 'auto' ? "text" : "number"}
                       min="0"
-                      value={modoIngresoDatos === 'auto' ? `${endeudamientoAuto}% (Auto)` : endeudamientoManual}
+                      value={modoIngresoDatos === 'auto' ? `${endeudamientoAuto}% (Automático)` : endeudamientoManual}
                       onChange={(e) => setEndeudamientoManual(e.target.value)}
                       onKeyDown={modoIngresoDatos === 'manual' ? preventInvalidKeys : undefined}
                       placeholder="Ej. 25"
@@ -436,7 +436,7 @@ export default function Home() {
                     ) : (
                       <input
                         type="text"
-                        value={modoIngresoDatos === 'auto' ? `${frecuenciaAhorroAuto} (Auto)` : frecuenciaAhorroManual}
+                        value={modoIngresoDatos === 'auto' ? `${frecuenciaAhorroAuto} (Automático)` : frecuenciaAhorroManual}
                         readOnly
                         className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] cursor-pointer`}
                       />
@@ -613,7 +613,7 @@ export default function Home() {
                 {/* Recomendaciones de IA */}
                 <div className="space-y-1 flex-shrink-0 mt-2 border-t border-[var(--brand-border)] pt-2">
                   <span className={`text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted)]`}>
-                    Recomendaciones de IA:
+                    Recomendaciones de FINANCE IA:
                   </span>
                   <ul className="space-y-1 mt-1">
                     {resultado.recomendaciones.map((rec, index) => (
