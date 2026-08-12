@@ -56,3 +56,34 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 }
+
+/* Custom Scrollbar (Webkit: Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--brand-bg);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brand-border);
+  border-radius: 10px;
+  border: 2px solid var(--brand-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-accent);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--brand-bg);
+}
+
+/* Custom Scrollbar (Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-border) transparent;
+}

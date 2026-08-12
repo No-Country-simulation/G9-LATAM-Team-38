@@ -32,20 +32,24 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const [isLogin, setIsLogin] = useState(true);
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
+    const endpoint = isLogin ? "/auth/login" : "/auth/register";
+
     try {
-      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL.replace('/api', '')}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
-        throw new Error("Usuario o contraseña incorrectos");
+        throw new Error(isLogin ? "Usuario o contraseña incorrectos" : "Error al registrarse. El usuario podría ya existir.");
       }
 
       const data = await response.json();
@@ -53,12 +57,11 @@ export default function LoginPage() {
       if (data.token) {
         localStorage.setItem("finance_token", data.token);
         localStorage.setItem("finance_username", username);
-        
-        if (data.role === "ADMIN") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/analisis");
+        if (data.role) {
+          localStorage.setItem("finance_role", data.role);
         }
+        
+        router.push("/analisis");
       } else {
         throw new Error("No se recibió token de acceso");
       }
@@ -86,7 +89,9 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold leading-none">Finance IA</h1>
-              <p className="text-[var(--brand-muted)] text-xs mt-1">Ingresa a tu cuenta</p>
+              <p className="text-[var(--brand-muted)] text-xs mt-1">
+                {isLogin ? "Ingresa a tu cuenta" : "Crea una cuenta nueva"}
+              </p>
             </div>
           </div>
 
@@ -96,7 +101,9 @@ export default function LoginPage() {
               <div className="flex items-center justify-center w-3 h-3 border-2 border-[var(--brand-accent)] rounded-[2px]">
                 <div className="w-0.5 h-0.5 bg-[var(--brand-accent)]"></div>
               </div>
-              <h3 className="text-[var(--brand-muted)] font-bold tracking-widest text-[11px] uppercase">Iniciar Sesión</h3>
+              <h3 className="text-[var(--brand-muted)] font-bold tracking-widest text-[11px] uppercase">
+                {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+              </h3>
             </div>
 
             {error && (
@@ -106,7 +113,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-5 space-y-4">
+            <form onSubmit={handleAuth} className="bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[var(--brand-muted)] mb-1.5">
                   Usuario
@@ -157,7 +164,7 @@ export default function LoginPage() {
                     <div className="w-2 h-2 border-2 border-currentColor rounded-[1px] flex items-center justify-center">
                       <div className="w-0.5 h-0.5 bg-currentColor"></div>
                     </div>
-                    Ingresar al sistema
+                    {isLogin ? "Ingresar al sistema" : "Registrarse"}
                   </>
                 )}
               </button>
@@ -165,10 +172,14 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <p className="text-xs text-[var(--brand-muted)]">
-                ¿No tienes cuenta?{" "}
-                <Link href="/register" className="text-[var(--brand-accent)] hover:underline font-bold transition-colors">
-                  Regístrate aquí
-                </Link>
+                {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes una cuenta? "}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)} 
+                  className="text-[var(--brand-accent)] hover:underline font-bold transition-colors bg-transparent border-none cursor-pointer"
+                >
+                  {isLogin ? "Regístrate aquí" : "Inicia sesión"}
+                </button>
               </p>
             </div>
           </div>

@@ -135,9 +135,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col items-center p-4">
+    <div className="h-screen w-screen overflow-hidden bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col items-center p-4">
       
-      <GlobalHeader username={username || ""} onLogout={handleLogout} />
+      <GlobalHeader username={username || ""} onLogout={handleLogout} isAdmin={true} />
 
       {/* BANNER SUPERIOR */}
       <div className="w-full max-w-7xl mx-auto bg-[var(--brand-accent-hover)] border border-[var(--brand-border)] rounded-t-2xl px-5 py-3 flex justify-between items-center relative shadow-lg">
@@ -153,10 +153,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* CONTENEDOR PRINCIPAL */}
-      <main className="w-full max-w-7xl mx-auto bg-[var(--brand-card)] rounded-b-2xl p-4 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-5 shadow-2xl border border-[var(--brand-border)] border-t-0">
+      <main className="w-full max-w-7xl mx-auto flex-1 min-h-0 bg-[var(--brand-card)] rounded-b-2xl p-4 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-5 shadow-2xl border border-[var(--brand-border)] border-t-0 overflow-hidden">
         
         {/* COLUMNA IZQUIERDA (LISTA DE USUARIOS) */}
-        <div className="lg:col-span-2 flex flex-col gap-2">
+        <div className="lg:col-span-2 flex flex-col gap-2 min-h-0 h-full">
           <div className="flex items-center gap-2 flex-shrink-0 mb-1">
             <div className="flex items-center justify-center w-3 h-3 border-2 border-[var(--brand-accent)] rounded-[2px]">
               <div className="w-0.5 h-0.5 bg-[var(--brand-accent)]"></div>
@@ -170,9 +170,9 @@ export default function AdminDashboard() {
                 {error}
               </div>
             ) : (
-              <div className="overflow-x-auto flex-1">
-                <table className="w-full text-left border-collapse">
-                  <thead>
+              <div className="overflow-auto flex-1 pr-1 relative">
+                <table className="w-full text-left border-collapse relative">
+                  <thead className="sticky top-0 bg-[var(--brand-bg)] z-10">
                     <tr className="border-b border-[var(--brand-border)] text-[11px] font-bold text-[var(--brand-muted)] uppercase tracking-wider">
                       <th className="py-2.5 px-3">ID</th>
                       <th className="py-2.5 px-3">Usuario</th>
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* COLUMNA DERECHA (CREAR ADMIN) */}
-        <div className="flex flex-col gap-2 lg:pl-5 lg:border-l border-[var(--brand-border)]">
+        <div className="flex flex-col gap-2 lg:pl-5 lg:border-l border-[var(--brand-border)] overflow-y-auto pr-1">
           <div className="flex items-center gap-2 flex-shrink-0 mb-1">
             <div className="flex items-center justify-center w-3 h-3 border-2 border-[var(--brand-accent)] rounded-[2px]">
               <div className="w-0.5 h-0.5 bg-[var(--brand-accent)]"></div>

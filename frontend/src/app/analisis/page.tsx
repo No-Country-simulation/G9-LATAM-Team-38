@@ -39,7 +39,7 @@ interface Miembro {
 
 export default function Home() {
   const { theme } = useTheme();
-  const [ingresoMensual, setIngresoMensual] = useState<string>("4500");
+  const [ingresoMensual, setIngresoMensual] = useState<string>("");
   
   const [modoIngresoDatos, setModoIngresoDatos] = useState<'auto' | 'manual' | null>(null);
   const [mostrarModalModo, setMostrarModalModo] = useState<boolean>(false);
@@ -49,17 +49,11 @@ export default function Home() {
   const [frecuenciaAhorroManual, setFrecuenciaAhorroManual] = useState<string>("Media");
 
   const [transacciones, setTransacciones] = useState<Transaccion[]>([
-    { id: "1", descripcion: "Supermercado", monto: "420" },
-    { id: "2", descripcion: "Combustible", monto: "300" },
-    { id: "3", descripcion: "Streaming", monto: "40" },
+    { id: "1", descripcion: "", monto: "" },
   ]);
 
   const [resultado, setResultado] = useState<ResultadoAnalisis | null>(null);
   const [generandoPDF, setGenerandoPDF] = useState(false);
-
-  const [mostrarModal, setMostrarModal] = useState<boolean>(false);
-  const [nuevaDescripcion, setNuevaDescripcion] = useState<string>("");
-  const [nuevoMonto, setNuevoMonto] = useState<string>("");
 
   const [mostrarMiembros, setMostrarMiembros] = useState<boolean>(false);
   const [cargando, setCargando] = useState<boolean>(false);
@@ -68,17 +62,23 @@ export default function Home() {
   const [frecuenciaAhorroAuto, setFrecuenciaAhorroAuto] = useState<string>("Media");
 
   const [username, setUsername] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("finance_username");
     if (storedUsername) {
       setUsername(storedUsername);
     }
+    const role = localStorage.getItem("finance_role");
+    if (role === "ADMIN") {
+      setIsAdmin(true);
+    }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("finance_token");
     localStorage.removeItem("finance_username");
+    localStorage.removeItem("finance_role");
     setUsername(null);
     window.location.href = "/login";
   };
@@ -128,36 +128,7 @@ export default function Home() {
     }
   }, [modoIngresoDatos, ingresoMensual, transacciones]);
 
-  const abrirModal = () => {
-    setNuevaDescripcion("");
-    setNuevoMonto("");
-    setMostrarModal(true);
-  };
 
-  const guardarNuevaTransaccion = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validacion = TransaccionSecuritySchema.safeParse({
-      descripcion: nuevaDescripcion,
-      monto: parseFloat(nuevoMonto),
-    });
-
-    if (!validacion.success) {
-      setMensajeAdvertencia(validacion.error.issues[0]?.message || "Entrada no válida");
-      return;
-    }
-
-    setTransacciones([
-      ...transacciones,
-      {
-        id: Date.now().toString(),
-        descripcion: validacion.data.descripcion,
-        monto: validacion.data.monto.toString(),
-      },
-    ]);
-
-    setMostrarModal(false);
-  };
 
   const eliminarTransaccion = (id: string) => {
     setTransacciones(transacciones.filter((t) => t.id !== id));
@@ -200,9 +171,22 @@ export default function Home() {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = position - pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`Analisis_Financiero_${username || 'Usuario'}.pdf`);
     } catch (error) {
       console.error("Error al generar PDF:", error);
@@ -211,21 +195,27 @@ export default function Home() {
     }
   };
 
-  const ejecutarAnalisis = async () => {
+  const ejecutarAnalisis = async (modoForzado?: any) => {
     setResultado(null); 
     setMensajeAdvertencia(null);
     setCargando(true);
     
     const ingreso = parseFloat(ingresoMensual) || 0;
+    const modoActual = typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
     
     // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
-    if (modoIngresoDatos === null) {
+    if (modoActual === null) {
       setMostrarModalModo(true);
       setCargando(false);
       return;
     }
     
     const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
+    if (transaccionesValidas.length === 0) {
+      setMensajeAdvertencia("Por favor, ingresa al menos una transacción (ingreso o gasto) con un monto válido para poder analizar tu perfil.");
+      setCargando(false);
+      return;
+    }
     const totalGastos = transaccionesValidas.reduce((acc, t) => acc + (parseFloat(t.monto) || 0), 0);
     
     const transaccionesBackend = transaccionesValidas.map(t => ({
@@ -236,7 +226,7 @@ export default function Home() {
     let nivelEndeudamiento = null;
     let frecuenciaAhorro = null;
 
-    if (modoIngresoDatos === 'manual') {
+    if (modoActual === 'manual') {
       const end = parseFloat(endeudamientoManual);
       if (isNaN(end) || end < 0) {
         setMensajeAdvertencia("El nivel de endeudamiento debe ser un número válido mayor o igual a 0.");
@@ -342,7 +332,7 @@ export default function Home() {
   return (
     <div className="h-screen w-screen bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col justify-between selection:bg-[var(--brand-accent)]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300">
       
-      <GlobalHeader username={username || ""} onLogout={handleLogout} />
+      <GlobalHeader username={username || ""} onLogout={handleLogout} isAdmin={isAdmin} />
 
       {/* CONTENEDOR CENTRAL */}
       <div className="w-full max-w-7xl mx-auto my-1 flex-1 flex flex-col justify-center min-h-0">
@@ -394,7 +384,7 @@ export default function Home() {
                     value={ingresoMensual}
                     onChange={(e) => setIngresoMensual(e.target.value)}
                     onKeyDown={preventInvalidKeys}
-                    placeholder="4500"
+                    placeholder="Ej. 4500"
                     className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
                   />
                 </div>
@@ -451,7 +441,7 @@ export default function Home() {
                       Transacciones recientes
                     </label>
                     <button
-                      onClick={abrirModal}
+                      onClick={() => setTransacciones([...transacciones, { id: Date.now().toString(), descripcion: "", monto: "" }])}
                       type="button"
                       className="text-[var(--brand-accent)] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
                     >
@@ -684,69 +674,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* MODAL PARA AÑADIR TRANSACCIÓN */}
-      {mostrarModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`bg-[var(--brand-card)] border border-[var(--brand-border)] rounded-2xl p-5 max-w-sm w-full shadow-2xl relative`}>
-            <button
-              onClick={() => setMostrarModal(false)}
-              className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity"
-            >
-              <X size={16} />
-            </button>
 
-            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-              <Plus size={16} className="text-[var(--brand-accent)]" /> Añadir Transacción
-            </h3>
-
-            <form onSubmit={guardarNuevaTransaccion} className="space-y-3">
-              <div>
-                <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1`}>
-                  Descripción
-                </label>
-                <input
-                  type="text"
-                  value={nuevaDescripcion}
-                  onChange={(e) => setNuevaDescripcion(e.target.value)}
-                  placeholder="Ej. Supermercado, Servicios..."
-                  className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)]`}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1`}>
-                  Monto ($)
-                </label>
-                <input
-                  type="number"
-                  value={nuevoMonto}
-                  onChange={(e) => setNuevoMonto(e.target.value)}
-                  placeholder="0.00"
-                  className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
-                  required
-                />
-              </div>
-
-              <div className="pt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMostrarModal(false)}
-                  className={`flex-1 border border-[var(--brand-border)] hover:opacity-80 text-xs font-bold py-2 rounded-lg transition-opacity`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-[var(--brand-accent)] text-[var(--brand-bg)] hover:opacity-90 text-xs font-bold py-2 rounded-lg transition-opacity"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       
       {/* MODAL PARA PREGUNTAR MODO DE INGRESO (AUTO/MANUAL) */}
       {mostrarModalModo && (
@@ -773,6 +701,7 @@ export default function Home() {
                   setEndeudamientoManual("");
                   setFrecuenciaAhorroManual("Media");
                   setMostrarModalModo(false);
+                  setTimeout(() => ejecutarAnalisis('auto'), 50);
                 }}
                 className="w-full bg-[var(--brand-accent)] text-[var(--brand-bg)] hover:opacity-90 font-bold py-2.5 rounded-lg transition-all shadow-md text-sm"
               >
