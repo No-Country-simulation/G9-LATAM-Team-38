@@ -13,6 +13,8 @@ PAYLOAD_VALIDO = {
     "frecuenciaAhorro": "Media",
 }
 
+ETIQUETAS_PERFIL_VALIDAS = {"En observacion", "En riesgo", "Finanzas sanas"}
+
 
 def test_prediccion_interna_no_lanza_value_error_de_shape():
     with TestClient(app) as client:
@@ -30,3 +32,12 @@ def test_prediccion_interna_sin_nivel_endeudamiento_usa_default():
         response = client.post("/prediccion-interna", json=payload)
 
     assert response.status_code == 200
+
+
+def test_perfil_valor_es_etiqueta_de_texto_no_indice_numerico():
+    with TestClient(app) as client:
+        response = client.post("/prediccion-interna", json=PAYLOAD_VALIDO)
+
+    assert response.status_code == 200
+    valor = response.json()["perfil"]["valor"]
+    assert valor in ETIQUETAS_PERFIL_VALIDAS
