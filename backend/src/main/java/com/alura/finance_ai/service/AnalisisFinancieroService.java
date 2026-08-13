@@ -74,16 +74,27 @@ public class AnalisisFinancieroService {
     }
 
     public AnalisisRequest validarYCompletarRequest(AnalisisRequest request) {
-        double ingreso = request.ingresoMensual() != null && request.ingresoMensual() > 0 ? request.ingresoMensual() : 1.0;
-        
-        double totalGastos = 0.0;
-        if (request.transacciones() != null) {
-            for (TransaccionDTO t : request.transacciones()) {
-                if (t.valor() != null) {
-                    totalGastos += t.valor();
-                }
-            }
+
+    if (request.ingresoMensual() == null || request.ingresoMensual() <= 0) {
+        throw new IllegalArgumentException(
+                "Debes ingresar un valor válido superior a 0 en el ingreso mensual."
+        );
+    }
+
+    double ingreso = request.ingresoMensual();
+
+    double totalGastos = 0.0;
+    if (request.transacciones() != null) {
+    for (TransaccionDTO t : request.transacciones()) {
+        if (t.valor() == null || t.valor() <= 0) {
+            throw new IllegalArgumentException(
+                    "Debes ingresar un valor válido superior a 0 en cada gasto."
+            );
         }
+
+        totalGastos += t.valor();
+    }
+}
 
         Integer endeudamiento = request.nivelEndeudamiento();
         String ahorro = request.frecuenciaAhorro();

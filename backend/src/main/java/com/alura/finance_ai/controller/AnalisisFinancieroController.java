@@ -181,4 +181,14 @@ public class AnalisisFinancieroController {
 
         return resumen;
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+public ResponseEntity<Map<String, String>> manejarErrorValidacion(
+        IllegalArgumentException e) {
+
+    Map<String, String> response = new HashMap<>();
+    response.put("error", e.getMessage());
+
+    return ResponseEntity.badRequest().body(response);
+}
 }
