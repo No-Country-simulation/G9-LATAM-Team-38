@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Bot, Heart, Send, Plus, Trash2, AlertCircle, CheckCircle2, 
-  X, Zap, Users, ChevronDown, ChevronUp, Sun, Moon, Download
+import {
+  Bot, PlusCircle, Trash2, AlertCircle, BadgeCheck,
+  X, Sparkles, WalletCards, ChartNoAxesCombined, UsersRound,
+  ChevronDown, ChevronUp, FileDown
 } from "lucide-react";
 import { sanitizeInput, TransaccionSecuritySchema } from "@/lib/security";
 import { API_BASE_URL } from "@/config/api";
@@ -329,6 +330,39 @@ export default function Home() {
 
   const noSpinnersClass = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
+  // Colores dinámicos para las métricas según su nivel de riesgo.
+  // Confianza alta y ahorro alto representan menor riesgo.
+  const getConfidenceColor = (value: number) => {
+    if (value >= 80) return "#22c55e";
+    if (value >= 60) return "#eab308";
+    return "#ef4444";
+  };
+
+  // Endeudamiento bajo representa menor riesgo.
+  const getDebtColor = (value: number) => {
+    if (value <= 30) return "#22c55e";
+    if (value <= 60) return "#eab308";
+    return "#ef4444";
+  };
+
+  const getSavingsColor = (frequency: string) => {
+    const value = frequency.toLowerCase();
+
+    if (value.includes("muy alta")) return "#22c55e";
+    if (value.includes("alta")) return "#84cc16";
+    if (value.includes("media")) return "#eab308";
+    if (value.includes("baja")) return "#f97316";
+    return "#ef4444";
+  };
+
+  // Color dinámico según el porcentaje que representa cada gasto.
+  const getExpenseColor = (percentage: number) => {
+    if (percentage <= 20) return "#22c55e";
+    if (percentage <= 40) return "#eab308";
+    if (percentage <= 60) return "#f97316";
+    return "#ef4444";
+  };
+
   return (
     <div className="h-screen w-screen bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col justify-between selection:bg-[var(--brand-accent)]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300">
       
@@ -343,8 +377,8 @@ export default function Home() {
             <div className={`text-[var(--brand-accent)] text-[9px] font-bold tracking-widest uppercase mb-0.5`}>
               ANÁLISIS FINANCIERO
             </div>
-            <h2 className={`text-sm md:text-lg font-bold flex items-center gap-2 text-[var(--brand-banner-text)]`}>
-              <Zap size={18} className={`text-[var(--brand-accent)] fill-[var(--brand-accent)]/20 stroke-[2.5]`} />
+            <h2 className={`group text-sm md:text-lg font-bold flex items-center gap-2 text-[var(--brand-banner-text)]`}>
+              <Sparkles size={18} className="text-[var(--brand-accent)] fill-[var(--brand-accent)]/20 stroke-[2.5] transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
               Conoce recomendaciones y tu salud financiera
             </h2>
           </div>
@@ -352,8 +386,8 @@ export default function Home() {
           <div className="z-10 mt-1 sm:mt-0 flex items-center gap-2 bg-[#0B2545]/20 border border-[var(--brand-border)] px-3 py-1 rounded-full">
             <div className="w-2 h-2 rounded-full bg-[var(--brand-accent)] animate-pulse"></div>
             <span className={`text-[11px] font-mono text-[var(--brand-banner-text)] font-semibold flex items-center gap-1.5`}>
-              <Send size={11} className="text-[var(--brand-accent)]" />
-              /Analisis-Financiero
+              <Bot size={11} className="text-[var(--brand-accent)] transition-transform duration-200 hover:scale-125" />
+              Análisis personalizado para {username || "Gabriel"}
             </span>
           </div>
         </div>
@@ -364,9 +398,11 @@ export default function Home() {
           {/* COLUMNA IZQUIERDA (ENTRADA) */}
           <div className="flex flex-col gap-2 min-h-0">
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center justify-center w-3 h-3 border-2 border-[var(--brand-accent)] rounded-[2px]">
-                <div className="w-0.5 h-0.5 bg-[var(--brand-accent)]"></div>
-              </div>
+              <WalletCards
+                size={15}
+                strokeWidth={2.2}
+                className="text-[var(--brand-accent)] flex-shrink-0 transition-transform duration-200 hover:scale-110"
+              />
               <h3 className={`text-[var(--brand-muted)] font-bold tracking-widest text-[11px] uppercase`}>Entrada</h3>
             </div>
 
@@ -445,13 +481,13 @@ export default function Home() {
                       type="button"
                       className="text-[var(--brand-accent)] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
                     >
-                      <Plus size={13} /> añadir
+                      <PlusCircle size={13} /> añadir
                     </button>
                   </div>
 
                   <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto pr-1">
                     {transacciones.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
+                      <div key={item.id} className="flex items-center gap-2 group">
                         <input
                           type="text"
                           placeholder="Descripción"
@@ -480,7 +516,7 @@ export default function Home() {
                             onClick={() => eliminarTransaccion(item.id)}
                             className="opacity-40 hover:opacity-100 p-0.5 transition-opacity"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={13} className="transition-transform duration-200 group-hover:scale-110" />
                           </button>
                         )}
                       </div>
@@ -491,12 +527,10 @@ export default function Home() {
 
               <button
                 onClick={ejecutarAnalisis}
-                className="w-full bg-[var(--brand-accent)] hover:bg-[var(--brand-accent-hover)] text-[var(--brand-bg)] hover:text-[#EEF4ED] font-bold py-2 rounded-lg transition-all shadow-md flex items-center justify-center gap-2 text-xs flex-shrink-0"
+                disabled={cargando}
+                className="w-full bg-[var(--brand-accent)] hover:bg-[var(--brand-accent-hover)] text-[var(--brand-bg)] hover:text-[#EEF4ED] font-bold py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center text-xs flex-shrink-0"
               >
-                <div className="w-2 h-2 border-2 border-currentColor rounded-[1px] flex items-center justify-center">
-                  <div className="w-0.5 h-0.5 bg-currentColor"></div>
-                </div>
-                Ejecutar análisis
+                {cargando ? "Analizando..." : "Ejecutar análisis"}
               </button>
             </div>
           </div>
@@ -504,9 +538,11 @@ export default function Home() {
           {/* COLUMNA DERECHA (RESULTADO) */}
           <div className={`flex flex-col gap-2 lg:pl-5 lg:border-l border-[var(--brand-border)] min-h-0`}>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center justify-center w-3 h-3 border-2 border-[var(--brand-accent)] rounded-[2px]">
-                <div className="w-0.5 h-0.5 bg-[var(--brand-accent)]"></div>
-              </div>
+              <ChartNoAxesCombined
+                size={15}
+                strokeWidth={2.2}
+                className="text-[var(--brand-accent)] flex-shrink-0 transition-transform duration-200 hover:scale-110"
+              />
               <h3 className={`text-[var(--brand-muted)] font-bold tracking-widest text-[11px] uppercase`}>Resultado</h3>
             </div>
             
@@ -519,7 +555,7 @@ export default function Home() {
               </div>
             ) : !resultado ? (
               <div className={`flex-1 border border-dashed border-[var(--brand-border)] rounded-xl flex flex-col items-center justify-center p-6 text-center`}>
-                <AlertCircle size={26} className="opacity-30 mb-2" />
+                <AlertCircle size={26} className="opacity-30 mb-2 transition-transform duration-300 hover:scale-110" />
                 <span className={`text-[var(--brand-muted)] text-xs font-medium`}>
                   Haz clic en &quot;Ejecutar análisis&quot; para generar los resultados
                 </span>
@@ -530,37 +566,46 @@ export default function Home() {
                 {/* Diagnóstico superior */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
                   <div className="flex items-center justify-around sm:justify-start gap-2 flex-shrink-0">
-                    <div className={`relative w-11 h-11 flex items-center justify-center rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-card)]`}>
+                    <div
+                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      style={{ borderColor: getConfidenceColor(resultado.confianza) }}
+                    >
                       <div className="text-center">
-                        <span className="text-[11px] font-bold block leading-none">
+                        <span className="text-sm font-bold block leading-none">
                           {resultado.confianza}%
                         </span>
-                        <span className="text-[6px] opacity-60 block mt-0.5">Confianza</span>
+                        <span className="text-[8px] opacity-60 block mt-1">Confianza</span>
                       </div>
                     </div>
 
-                    <div className={`relative w-11 h-11 flex items-center justify-center rounded-full border-2 border-[#13315C] bg-[var(--brand-card)]`}>
+                    <div
+                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      style={{ borderColor: getDebtColor(resultado.endeudamiento) }}
+                    >
                       <div className="text-center">
-                        <span className="text-[11px] font-bold block leading-none">
+                        <span className="text-sm font-bold block leading-none">
                           {resultado.endeudamiento}%
                         </span>
-                        <span className="text-[6px] opacity-60 block mt-0.5">Endeudam.</span>
+                        <span className="text-[8px] opacity-60 block mt-1">Endeudam.</span>
                       </div>
                     </div>
 
-                    <div className={`relative w-11 h-11 flex items-center justify-center rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-card)]`}>
+                    <div
+                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      style={{ borderColor: getSavingsColor(resultado.frecuenciaAhorroText) }}
+                    >
                       <div className="text-center">
-                        <span className="text-[10px] font-bold block leading-none truncate max-w-[36px]">
+                        <span className="text-xs font-bold block leading-none truncate max-w-[50px]">
                           {resultado.frecuenciaAhorroText}
                         </span>
-                        <span className="text-[6px] opacity-60 block mt-0.5">Ahorro</span>
+                        <span className="text-[8px] opacity-60 block mt-1">Ahorro</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <CheckCircle2 size={12} className="text-[var(--brand-accent)] flex-shrink-0" />
+                      <BadgeCheck size={13} className="text-[var(--brand-accent)] flex-shrink-0 transition-transform duration-200 hover:scale-110" />
                       <span className="text-xs font-bold truncate">Estado: {resultado.estado}</span>
                     </div>
                     <p className={`text-[var(--brand-muted)] text-[10px] leading-snug line-clamp-2`}>
@@ -581,8 +626,11 @@ export default function Home() {
                     {(resultado.desglose ?? []).map((item, idx) => (
                       <div
                         key={idx}
-                        style={{ width: `${item.porcentaje}%` }}
-                        className={`h-full bg-[var(--brand-accent)] transition-all duration-500`}
+                        style={{
+                          width: `${item.porcentaje}%`,
+                          backgroundColor: getExpenseColor(item.porcentaje),
+                        }}
+                        className="h-full transition-all duration-500"
                         title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
                       />
                     ))}
@@ -592,7 +640,10 @@ export default function Home() {
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
                     {(resultado.desglose ?? []).map((item, idx) => (
                       <div key={idx} className="flex items-center gap-1 text-[10.5px]">
-                        <span className={`w-2 h-2 rounded-full bg-[var(--brand-accent)]`}></span>
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: getExpenseColor(item.porcentaje) }}
+                        ></span>
                         <span className="text-[var(--brand-muted)]">{item.descripcion}:</span>
                         <span className="font-bold">${item.monto}</span>
                       </div>
@@ -603,13 +654,18 @@ export default function Home() {
                 {/* Recomendaciones de IA */}
                 <div className="space-y-1 flex-shrink-0 mt-2 border-t border-[var(--brand-border)] pt-2">
                   <span className={`text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted)]`}>
-                    Recomendaciones de FINANCE IA:
+                    Recomendaciones de IA:
                   </span>
-                  <ul className="space-y-1 mt-1">
+                  <ul className="space-y-2 mt-2">
                     {resultado.recomendaciones.map((rec, index) => (
-                      <li key={index} className={`text-[10px] flex items-start gap-1.5 text-[var(--brand-muted)]`}>
-                        <span className="text-[var(--brand-accent)] font-bold">•</span>
-                        <span className="leading-tight">{rec}</span>
+                      <li
+                        key={index}
+                        className="text-sm flex items-start gap-2 text-[var(--brand-muted)]"
+                      >
+                        <span className="text-[var(--brand-accent)] font-bold text-base leading-none mt-0.5">
+                          •
+                        </span>
+                        <span className="leading-relaxed">{rec}</span>
                       </li>
                     ))}
                   </ul>
@@ -619,9 +675,9 @@ export default function Home() {
                   <button
                     onClick={generarPDF}
                     disabled={generandoPDF}
-                    className="flex items-center gap-2 bg-[var(--brand-accent)] text-[var(--brand-bg)] px-3 py-1.5 rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50"
+                    className="group flex items-center gap-2 bg-[var(--brand-accent)] text-[var(--brand-bg)] px-3 py-1.5 rounded-lg font-bold text-xs hover:opacity-90 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:hover:translate-y-0"
                   >
-                    <Download size={14} />
+                    <FileDown size={14} className="transition-transform duration-200 group-hover:translate-y-0.5" />
                     {generandoPDF ? "Generando..." : "Descargar Reporte PDF"}
                   </button>
                 </div>
@@ -637,9 +693,9 @@ export default function Home() {
       <GlobalFooter>
         <button
           onClick={() => setMostrarMiembros(!mostrarMiembros)}
-          className="flex items-center gap-1 text-[var(--brand-accent)] hover:underline font-bold transition-colors"
+          className="group flex items-center gap-1 text-[var(--brand-accent)] hover:underline font-bold transition-colors"
         >
-          <Users size={14} />
+          <UsersRound size={14} className="transition-transform duration-200 group-hover:scale-110" />
           <span>Ver Miembros del Equipo</span>
           {mostrarMiembros ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
@@ -682,11 +738,11 @@ export default function Home() {
           <div className={`bg-[var(--brand-card)] border border-[var(--brand-border)] rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center`}>
             <button
               onClick={() => setMostrarModalModo(false)}
-              className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity"
+              className="absolute top-4 right-4 opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-200"
             >
               <X size={16} />
             </button>
-            <Bot size={40} className="mx-auto mb-4 text-[var(--brand-accent)]" />
+            <Bot size={40} className="mx-auto mb-4 text-[var(--brand-accent)] transition-transform duration-300 hover:scale-110 hover:-rotate-3" />
             <h3 className="text-lg font-bold mb-2">
               Configuración Avanzada
             </h3>
@@ -727,11 +783,11 @@ export default function Home() {
           <div className={`bg-[var(--brand-card)] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center`}>
             <button
               onClick={() => setMensajeAdvertencia(null)}
-              className="absolute top-4 right-4 opacity-50 hover:opacity-100 transition-opacity"
+              className="absolute top-4 right-4 opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-200"
             >
               <X size={16} />
             </button>
-            <AlertCircle size={40} className="mx-auto mb-4 text-red-400" />
+            <AlertCircle size={40} className="mx-auto mb-4 text-red-400 transition-transform duration-300 hover:scale-110" />
             <h3 className="text-lg font-bold mb-2">
               Validación Financiera
             </h3>
@@ -848,7 +904,7 @@ export default function Home() {
             <div className="w-full pt-8 mt-auto">
               <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
                 <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1"><Zap size={12} /> G9 LATAM Team 38</p>
+                <p className="flex items-center gap-1"><Sparkles size={12} /> G9 LATAM Team 38</p>
               </div>
               <div className="h-4 w-[calc(100%+6rem)] bg-[#1e3a8a] absolute bottom-0 -ml-12"></div>
             </div>
