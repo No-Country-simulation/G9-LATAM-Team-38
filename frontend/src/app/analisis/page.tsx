@@ -624,51 +624,52 @@ export default function Home() {
               <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-y-auto transition-colors duration-300`}>
                 
                 {/* Diagnóstico superior */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center justify-around sm:justify-start gap-2 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-2">
+                  {/* Círculos */}
+                  <div className="flex items-center justify-center sm:justify-start gap-3 flex-shrink-0">
                     <div
-                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full border-[2px] md:border-[3px] bg-[var(--brand-card)] shadow-sm"
                       style={{ borderColor: getConfidenceColor(resultado.confianza) }}
                     >
                       <div className="text-center">
-                        <span className="text-sm font-bold block leading-none">
+                        <span className="text-base md:text-lg font-bold block leading-none text-[var(--brand-text)]">
                           {resultado.confianza}%
                         </span>
-                        <span className="text-[8px] opacity-60 block mt-1">Confianza</span>
+                        <span className="text-[9px] md:text-[10px] opacity-70 block mt-1 text-[var(--brand-text)]">Confianza</span>
                       </div>
                     </div>
 
                     <div
-                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full border-[2px] md:border-[3px] bg-[var(--brand-card)] shadow-sm"
                       style={{ borderColor: getDebtColor(resultado.endeudamiento) }}
                     >
                       <div className="text-center">
-                        <span className="text-sm font-bold block leading-none">
+                        <span className="text-base md:text-lg font-bold block leading-none text-[var(--brand-text)]">
                           {resultado.endeudamiento}%
                         </span>
-                        <span className="text-[8px] opacity-60 block mt-1">Endeudam.</span>
+                        <span className="text-[9px] md:text-[10px] opacity-70 block mt-1 text-[var(--brand-text)]">Endeudam.</span>
                       </div>
                     </div>
 
                     <div
-                      className="relative w-16 h-16 flex items-center justify-center rounded-full border-2 bg-[var(--brand-card)]"
+                      className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full border-[2px] md:border-[3px] bg-[var(--brand-card)] shadow-sm"
                       style={{ borderColor: getSavingsColor(resultado.frecuenciaAhorroText) }}
                     >
                       <div className="text-center">
-                        <span className="text-xs font-bold block leading-none truncate max-w-[50px]">
+                        <span className="text-xs md:text-sm font-bold block leading-none truncate max-w-[50px] md:max-w-[60px] text-[var(--brand-text)]">
                           {resultado.frecuenciaAhorroText}
                         </span>
-                        <span className="text-[8px] opacity-60 block mt-1">Ahorro</span>
+                        <span className="text-[9px] md:text-[10px] opacity-70 block mt-1 text-[var(--brand-text)]">Ahorro</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <BadgeCheck size={13} className="text-[var(--brand-accent)] flex-shrink-0 transition-transform duration-200 hover:scale-110" />
-                      <span className="text-xs font-bold truncate">Estado: {resultado.estado}</span>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <BadgeCheck size={16} className="text-[var(--brand-accent)] flex-shrink-0 transition-transform duration-200 hover:scale-110" />
+                      <span className="text-sm font-bold truncate">Estado: {resultado.estado}</span>
                     </div>
-                    <p className={`text-[var(--brand-muted)] text-[10px] leading-snug line-clamp-2`}>
+                    <p className="text-[var(--brand-muted)] text-[11px] md:text-xs leading-relaxed line-clamp-3">
                       {resultado.mensaje}
                     </p>
                   </div>
