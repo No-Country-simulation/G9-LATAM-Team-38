@@ -14,7 +14,7 @@ pydantic==2.13.4
 pydantic_core==2.46.4
 python-dateutil==2.9.0.post0
 pytz==2024.2
-scikit-learn==1.5.2
+scikit-learn==1.8.0
 scipy==1.13.1
 setuptools==83.0.0
 six==1.17.0
