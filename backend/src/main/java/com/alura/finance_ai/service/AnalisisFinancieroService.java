@@ -1,6 +1,9 @@
 package com.alura.finance_ai.service;
 
 import com.alura.finance_ai.dto.AnalisisRequest;
+import com.alura.finance_ai.dto.PrediccionInternaResponse;
+import com.alura.finance_ai.dto.PrediccionPythonRequest;
+import com.alura.finance_ai.dto.PrediccionPythonRequest.TransaccionPython;
 import com.alura.finance_ai.dto.TransaccionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,7 @@ import org.springframework.web.client.RestClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class AnalisisFinancieroService {
@@ -137,33 +141,61 @@ public class AnalisisFinancieroService {
         return puntaje;
     }
 
-    public String realizarPrediccionInterna(Object payload) {
+    /**
+     * Traduce el contrato publico (TransaccionDTO.valor) al contrato esperado por
+     * data_science/main.py (Transaccion.monto). Ver PrediccionPythonRequest.
+     */
+    private PrediccionPythonRequest construirPayloadPython(AnalisisRequest request) {
+        List<TransaccionPython> transacciones = request.transacciones() == null
+                ? List.of()
+                : request.transacciones().stream()
+                        .map(t -> new TransaccionPython(null, t.descripcion(), t.valor(), null))
+                        .collect(Collectors.toList());
+
+        return new PrediccionPythonRequest(
+                null,
+                transacciones,
+                request.ingresoMensual(),
+                request.nivelEndeudamiento(),
+                request.frecuenciaAhorro()
+        );
+    }
+
+    public String realizarPrediccionInterna(AnalisisRequest request) {
         try {
-            return restClient.post()
+            PrediccionInternaResponse response = restClient.post()
                     .uri("/prediccion-interna")
-                    .body(payload)
+                    .body(construirPayloadPython(request))
                     .retrieve()
-                    .body(String.class);
+                    .body(PrediccionInternaResponse.class);
+            return response.perfil().valor();
         } catch (Exception e) {
             // Se manda a imprimir el error en color rojo para saber que paso antes de mandar la respuesta por defecto
             logger.error("Se cayo la conexion con Python en prediccion Interna: " + e.getMessage());
 
-            // Simulamos una respuesta usando la lógica del requerimiento solicitada
-            if (payload instanceof AnalisisRequest req) {
-                int puntaje = calcularPuntaje(req);
-                return (puntaje >= 80) ? "Excelente" : (puntaje >= 50) ? "Estable" : (puntaje >= 30) ? "En Riesgo" : "Crítico";
-            }
-            return "En Observacion";
+            // Simulamos una respuesta usando la lógica del requerimiento solicitada,
+            // con el mismo vocabulario que usa el modelo de Python (codificador_perfil.pkl)
+            int puntaje = calcularPuntaje(request);
+            return (puntaje >= 50) ? "Finanzas sanas" : (puntaje >= 30) ? "En observacion" : "En riesgo";
         }
     }
 
     public String clasificarTransaccion(TransaccionDTO transaccion) {
         try {
-            return restClient.post()
+            // /prediccion-interna exige una lista de transacciones (min 1), no un objeto suelto
+            PrediccionPythonRequest payload = new PrediccionPythonRequest(
+                    null,
+                    List.of(new TransaccionPython(null, transaccion.descripcion(), transaccion.valor(), null)),
+                    null,
+                    null,
+                    null
+            );
+            PrediccionInternaResponse response = restClient.post()
                     .uri("/prediccion-interna")
-                    .body(transaccion)
+                    .body(payload)
                     .retrieve()
-                    .body(String.class);
+                    .body(PrediccionInternaResponse.class);
+            return response.transacciones().get(0).categoria();
         } catch (Exception e) {
             //Se logea el error y se simula la categoria para que el front end no se rompa
            logger.warn("No se puede clasificar la transaccion, Error: " + e.getMessage());

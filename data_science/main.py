@@ -127,9 +127,12 @@ async def lifespan(app: FastAPI):
 # --------------------------------------------------------------------------
 
 class FrecuenciaAhorro(str, Enum):
-    ALTA = "Alta"
-    MEDIA = "Media"
+    NULA = "Nula"
+    MUY_BAJA = "Muy baja"
     BAJA = "Baja"
+    MEDIA = "Media"
+    ALTA = "Alta"
+    MUY_ALTA = "Muy alta"
 
 
 class BaseSchema(BaseModel):
