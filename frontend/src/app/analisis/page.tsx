@@ -86,8 +86,23 @@ export default function Home() {
 
   useEffect(() => {
     if (modoIngresoDatos === 'auto') {
-      const ingreso = parseFloat(ingresoMensual) || 0;
-      const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
+      const ingreso = parseFloat(ingresoMensual);
+
+      // No consultar al backend si el ingreso mensual
+      // no es un valor válido superior a 0.
+      if (!ingresoMensual.trim() || isNaN(ingreso) || ingreso <= 0) {
+        return;
+      }
+
+      const transaccionesValidas = transacciones.filter(
+        t => parseFloat(t.monto) > 0
+      );
+
+      // No consultar al backend hasta tener al menos un gasto válido.
+      if (transaccionesValidas.length === 0) {
+        return;
+      }
+
       const transaccionesBackend = transaccionesValidas.map(t => ({
         descripcion: t.descripcion || "Gasto",
         valor: parseFloat(t.monto)
@@ -96,6 +111,7 @@ export default function Home() {
       const timeoutId = setTimeout(() => {
         const token = localStorage.getItem("finance_token");
         const headers: HeadersInit = { 'Content-Type': 'application/json' };
+
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
@@ -110,20 +126,21 @@ export default function Home() {
             transacciones: transaccionesBackend
           })
         })
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`Error HTTP: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data.nivel_endeudamiento !== undefined) {
-             setEndeudamientoAuto(data.nivel_endeudamiento.toString());
-             setFrecuenciaAhorroAuto(data.frecuencia_ahorro);
-          }
-        })
-        .catch(err => console.error("Error pre-calculo:", err));
-      }, 300); // Debounce de 300ms para no saturar el backend al tipear
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`Error HTTP: ${res.status}`);
+            }
+
+            return res.json();
+          })
+          .then(data => {
+            if (data.nivel_endeudamiento !== undefined) {
+              setEndeudamientoAuto(data.nivel_endeudamiento.toString());
+              setFrecuenciaAhorroAuto(data.frecuencia_ahorro);
+            }
+          })
+          .catch(err => console.error("Error pre-calculo:", err));
+      }, 300);
 
       return () => clearTimeout(timeoutId);
     }
@@ -197,32 +214,72 @@ export default function Home() {
   };
 
   const ejecutarAnalisis = async (modoForzado?: any) => {
-    setResultado(null); 
+    setResultado(null);
     setMensajeAdvertencia(null);
     setCargando(true);
-    
-    const ingreso = parseFloat(ingresoMensual) || 0;
-    const modoActual = typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
-    
+
+    const ingreso = parseFloat(ingresoMensual);
+    const modoActual =
+      typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
+
+    // VALIDACIÓN DEL INGRESO MENSUAL
+    if (
+      !ingresoMensual.trim() ||
+      isNaN(ingreso) ||
+      ingreso <= 0
+    ) {
+      setMensajeAdvertencia(
+        "Debes ingresar un valor válido superior a 0 en el ingreso mensual."
+      );
+      setCargando(false);
+      return;
+    }
+
     // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
     if (modoActual === null) {
       setMostrarModalModo(true);
       setCargando(false);
       return;
     }
-    
-    const transaccionesValidas = transacciones.filter(t => parseFloat(t.monto) > 0);
-    if (transaccionesValidas.length === 0) {
-      setMensajeAdvertencia("Por favor, ingresa al menos una transacción (ingreso o gasto) con un monto válido para poder analizar tu perfil.");
+
+    // VALIDACIÓN DE GASTOS
+    const hayGastoInvalido = transacciones.some(
+      t =>
+        !t.monto.trim() ||
+        isNaN(parseFloat(t.monto)) ||
+        parseFloat(t.monto) <= 0
+    );
+
+    if (hayGastoInvalido) {
+      setMensajeAdvertencia(
+        "Debes ingresar un valor válido superior a 0 en cada gasto."
+      );
       setCargando(false);
       return;
     }
-    const totalGastos = transaccionesValidas.reduce((acc, t) => acc + (parseFloat(t.monto) || 0), 0);
-    
+
+    const transaccionesValidas = transacciones.filter(
+      t => parseFloat(t.monto) > 0
+    );
+
+    if (transaccionesValidas.length === 0) {
+      setMensajeAdvertencia(
+        "Debes ingresar al menos un gasto con un valor válido superior a 0."
+      );
+      setCargando(false);
+      return;
+    }
+
+    const totalGastos = transaccionesValidas.reduce(
+      (acc, t) => acc + (parseFloat(t.monto) || 0),
+      0
+    );
+
     const transaccionesBackend = transaccionesValidas.map(t => ({
       descripcion: t.descripcion || "Gasto",
       valor: parseFloat(t.monto)
     }));
+
 
     let nivelEndeudamiento = null;
     let frecuenciaAhorro = null;
@@ -384,9 +441,12 @@ export default function Home() {
           </div>
 
           <div className="z-10 mt-1 sm:mt-0 flex items-center gap-2 bg-[#0B2545]/20 border border-[var(--brand-border)] px-3 py-1 rounded-full">
-            <div className="w-2 h-2 rounded-full bg-[var(--brand-accent)] animate-pulse"></div>
-            <span className={`text-[11px] font-mono text-[var(--brand-banner-text)] font-semibold flex items-center gap-1.5`}>
-              <Bot size={11} className="text-[var(--brand-accent)] transition-transform duration-200 hover:scale-125" />
+            <Bot
+              size={14}
+              strokeWidth={2.5}
+              className="text-[var(--brand-accent)] animate-pulse"
+            />
+            <span className={`text-[11px] font-mono text-[var(--brand-banner-text)] font-semibold`}>
               Análisis personalizado para {username || "Gabriel"}
             </span>
           </div>
