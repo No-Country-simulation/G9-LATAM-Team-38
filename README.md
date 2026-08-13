@@ -1,65 +1,108 @@
-# FinanceAI
+# 🤖 Finance IA - Equipo #38 Dinamita
 
-## Descripción del proyecto
+[![NoCountry](https://img.shields.io/badge/NoCountry-Hackathon-1E3A8A?style=for-the-badge)](#) [![Alura Latam](https://img.shields.io/badge/Alura_Latam-0052CC?style=for-the-badge)](#) [![MVP](https://img.shields.io/badge/MVP-Snapshot_0.0.1-F59E0B?style=for-the-badge)](#)
 
-**FinanceAI** es un asistente de salud financiera desarrollado como proyecto del **Hackathon Oracle ONE — Generación 9**, por el equipo **G9-LATAM-Team 38**.
+> *"Conocer tus finanzas puede ser la diferencia entre tu nueva compra o tu nueva deuda."*
 
-- **Sector:** Fintech
-- **Objetivo:** Brindar a los usuarios herramientas de análisis financiero personal, incluyendo clasificación automática de gastos y evaluación de perfil financiero, para apoyar la toma de decisiones y el bienestar económico.
+---
 
-## Equipo — G9-LATAM-Team 38
+## 🌐 Demo en Vivo
 
-| Integrante | Rol |
-|---|---|
-| Brayan Camargo Ramírez | Project Manager (PM) |
-| Armando | Data Scientist |
-| Jesús García | Data Scientist |
-| Sonia Moran Jarquin | Data Scientist |
-| Gabriel Gil | Backend |
-| Ian Alonso Jesus Osnaya | Backend |
-| Marco Antonio Arias Mullisaca | Full Stack |
-| Julio Cesar Brito Guarneros | Software Engineer / Infraestructura |
+¡Te invitamos a probar Finance IA! El proyecto se encuentra desplegado y funcionando en el siguiente enlace:
+👉 **[Enlace al proyecto en Vercel - PRÓXIMAMENTE]** *(Reemplazar con el link cuando esté listo)*
 
-## Arquitectura (resumen)
+---
 
-- **Backend:** Java Spring Boot
-- **Microservicio de Data Science:** Python (FastAPI), expuesto en el puerto 8000 vía `/predict-internal`
-- **Contenerización:** Docker (imagen base `python:3.11-slim`)
-- **Despliegue:** Oracle Cloud Infrastructure (OCI) — Compute (VM) + docker-compose
+## 🚀 Sobre el Proyecto
 
-## Estructura del repositorio
+**Finance IA** es una solución Fintech desarrollada con la intención de apoyar y hacer conciencia sobre el control financiero mediante el uso de Inteligencia Artificial.
 
-```
-backend/
-data_science/
-docs/
-.gitignore
-docker-compose.yml
-README.md
-```
+A través de un ecosistema robusto de microservicios, la plataforma evalúa ingresos, niveles de endeudamiento y hábitos de ahorro para emitir un diagnóstico preciso. El sistema proporciona recomendaciones personalizadas en tiempo real, permitiendo a los usuarios tomar decisiones informadas, evitar riesgos crediticios y optimizar su economía personal con estrategias basadas en datos.
 
-## Convenciones
+---
 
-Este proyecto sigue la guía de convenciones del equipo (`Guia_Completa_Convenciones_Hackathon_Java_Python.md`):
-- Carpetas y archivos en `snake_case` (ej. `data_science/`)
-- Branches con guiones medios, sin slash (ej. `feature-user-auth`)
-- Conventional Commits para los mensajes de commit
+## ✨ Funcionalidades Destacadas
 
-## Prueba aislada en Postman
+* 📊 **Análisis de Perfil Financiero:** Evaluación automatizada del estado del usuario (*Saludable, En observación, En riesgo*) impulsada por modelos de Machine Learning entrenados con datos reales.
+* 🏷️ **Clasificación Inteligente de Gastos:** Categorización automática de transacciones (Alimentación, Transporte, Salud, Vivienda, Educación, Ocio y Servicios) mediante modelos entrenados y algoritmos.
+* 💡 **Motor de Recomendaciones (Finance-Dinamita):** Alertas preventivas automáticas por sobreendeudamiento y estrategias personalizadas para la optimización de la frecuencia de ahorro.
+* 📑 **Reportes Ejecutivos:** Generación y exportación dinámica de informes en formato PDF con desgloses detallados y planes de acción claros.
+* 🔐 **Seguridad y Control:** Panel de administración y sistema de acceso seguro respaldado por validaciones estrictas y protección de rutas.
+* 🌓 **Experiencia de Usuario (UX/UI):** Dashboard interactivo 100% responsive, desarrollado con soporte para Modo Claro/Oscuro.
 
-El entrypoint raíz levanta por defecto el modo `model-free`, por lo que la prueba no depende de modelos entrenados ni de una base de datos.
+---
 
-1. Inicia el API desde la raíz del proyecto:
+## 🛠️ Stack Tecnológico
 
+| Área | Tecnologías Principales |
+| :--- | :--- |
+| **Frontend (UI/UX)** | Next.js (App Router), TypeScript, Tailwind CSS, Vercel |
+| **Backend (API REST)**| Java 21, Spring Boot 4.1.0, MySQL 8.0.40, JWT, Swagger |
+| **Data Science (IA)** | Python 3.11, FastAPI, Scikit-Learn, Pandas, NumPy |
+| **Infraestructura** | Oracle Cloud Infrastructure (OCI), Docker |
+
+### 🏗️ Arquitectura y Despliegue en la Nube
+
+El proyecto está fundamentado en una arquitectura de microservicios orientada a la escalabilidad, el alto rendimiento y las mejores prácticas de código limpio:
+
+* **Integración Local Segura:** La API principal (Java) y el microservicio predictivo (Python) se comunican de forma interna y eficiente.
+* **Contenedorización:** Utilizamos **Docker** como solución de contenedorización para empaquetar los entornos, aislar las dependencias y asegurar la consistencia del despliegue entre el equipo.
+* **Cloud Hosting:** La infraestructura se aloja en una instancia gratuita Compute de **Oracle Cloud Infrastructure (OCI)**, aprovechando OCI Object Storage para el resguardo, versionado y carga segura de los modelos de IA entrenados (`.pkl`).
+
+---
+
+## 👥 Equipo Dinamita (G9 LATAM Team 38)
+
+El talento, la disciplina y la ingeniería detrás del código:
+
+| Rol | Integrante | Enlaces Profesionales |
+| :--- | :--- | :--- |
+| **Project Manager** | Brayan Camargo | [LinkedIn](https://www.linkedin.com/in/brayan-camargo-ram%C3%ADrez/) • [GitHub](https://github.com/Brayan-Camargo) |
+| **Full Stack Developer** | Marco Arias | [LinkedIn](https://www.linkedin.com/in/marco-antonio-arias-mullisaca-b688611ba/) • [GitHub](https://github.com/marcomull) |
+| **Backend Developer** | Gabriel Gil | [LinkedIn](https://www.linkedin.com/in/gabriel-gil-337a20250/) • [GitHub](https://github.com/gilgabriel422-netizen) |
+| **Backend Developer** | Ian Osnaya | [LinkedIn](https://www.linkedin.com/in/ian-osnaya-0a7b71375/) • [GitHub](https://github.com/IanOsnaya) |
+| **Data Scientist** | Sonia Moran | [LinkedIn](https://www.linkedin.com/in/sonia-moran-286717422/) • [GitHub](https://github.com/Zonya8) |
+| **Data Scientist** | Armando Tapia | [LinkedIn](https://www.linkedin.com/in/atapia9/) • [GitHub](https://github.com/atapia9) |
+| **Data Scientist** | Jesús García | [LinkedIn](https://www.linkedin.com/in/jesusjgarciam/) • [GitHub](https://github.com/Electrocyte96) |
+
+---
+
+## 💻 Instalación y Uso Local
+
+¿Quieres ejecutar Finance IA en tu propia máquina? Gracias a nuestra arquitectura con Docker, el proceso es muy sencillo.
+
+**Prerrequisitos:**
+* Tener instalado [Git](https://git-scm.com/) y [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+**Pasos de ejecución:**
+
+1. Clona este repositorio en tu computadora:
    ```bash
-   python3 -m uvicorn main:app --host 127.0.0.1 --port 8000
+   git clone https://github.com/No-Country-simulation/G9-LATAM-Team-38.git
    ```
 
-2. Importa en Postman la colección [`docs/postman/FinanceAI-local.postman_collection.json`](docs/postman/FinanceAI-local.postman_collection.json).
-3. Ejecuta las solicitudes `Health - API disponible sin modelos` y `Predict internal - contrato de red aislado`.
+2. Navega al directorio del proyecto:
+   ```bash
+   cd G9-LATAM-Team-38
+   ```
 
-La segunda solicitud usa `POST http://localhost:8000/predict-internal` y debe devolver `200 OK`, `mode: "model-free"` y `models_loaded: false`. Para activar inferencia real se debe iniciar con `ENABLE_MODEL_API=1`; esa ejecución sí requiere los modelos disponibles.
+3. Levanta todos los microservicios (Frontend, Backend, IA y Base de Datos) con un solo comando:
+   ```bash
+   docker-compose up -d
+   ```
 
-## Model artifacts
+4. Abre tu navegador y accede a la interfaz gráfica en:
+   ```
+   http://localhost:3000
+   ```
 
-The trained model files can be stored and restored as a versioned generic artifact in Google Artifact Registry. See [docs/MODEL_ARTIFACT_REGISTRY.md](docs/MODEL_ARTIFACT_REGISTRY.md) and the scripts in `scripts/`.
+---
+
+## 🔗 Referencias del Proyecto
+
+* 📋 **Tablero de Gestión:** [Trello Oficial - Team 38](https://trello.com/b/3mjaUnQb/finance-ia-team-38)
+* 🌐 **Iniciativas:** [NoCountry Tech](https://nocountry.tech/) • [Alura Latam](https://www.aluracursos.com/)
+
+---
+
+*Hecho con dedicación y cariño por el Equipo Dinamita.*
