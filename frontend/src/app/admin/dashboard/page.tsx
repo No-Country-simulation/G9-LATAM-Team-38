@@ -142,11 +142,11 @@ export default function AdminDashboard() {
       {/* BANNER SUPERIOR */}
       <div className="w-full max-w-7xl mx-auto bg-[var(--brand-accent-hover)] border border-[var(--brand-border)] rounded-t-2xl px-5 py-3 flex justify-between items-center relative shadow-lg">
         <div className="z-10">
-          <div className="text-[var(--brand-accent)] text-[9px] font-bold tracking-widest uppercase mb-0.5">
+          <div className="text-slate-900 text-[9px] font-bold tracking-widest uppercase mb-0.5">
             GESTIÓN GLOBAL
           </div>
-          <h2 className="text-sm md:text-lg font-bold flex items-center gap-2 text-[var(--brand-text)]">
-            <Shield size={18} className="text-[var(--brand-accent)] fill-[var(--brand-accent)]/20 stroke-[2.5]" />
+          <h2 className="text-sm md:text-lg font-bold flex items-center gap-2 text-slate-900">
+            <Shield size={18} className="text-slate-900 fill-slate-900/20 stroke-[2.5]" />
             Usuarios y Administradores del Sistema
           </h2>
         </div>
