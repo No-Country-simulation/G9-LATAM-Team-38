@@ -142,6 +142,22 @@ public class AnalisisFinancieroService {
     }
 
     /**
+     * data_science/main.py solo acepta Baja/Media/Alta. AnalisisRequest.frecuenciaAhorro
+     * ya esta validado a esos 3 valores para peticiones del usuario, pero
+     * determinarFrecuenciaAhorro() (auto-calculo interno cuando el usuario no lo
+     * envia) todavia puede producir "Muy alta"/"Muy baja"/"Nula" — se normaliza
+     * aqui, en el limite hacia Python, sin tocar esa logica interna de puntaje.
+     */
+    private String normalizarFrecuenciaParaPython(String ahorro) {
+        if (ahorro == null) return null;
+        return switch (ahorro.toLowerCase()) {
+            case "muy alta" -> "Alta";
+            case "muy baja", "nula" -> "Baja";
+            default -> ahorro;
+        };
+    }
+
+    /**
      * Traduce el contrato publico (TransaccionDTO.valor) al contrato esperado por
      * data_science/main.py (Transaccion.monto). Ver PrediccionPythonRequest.
      */
@@ -157,7 +173,7 @@ public class AnalisisFinancieroService {
                 transacciones,
                 request.ingresoMensual(),
                 request.nivelEndeudamiento(),
-                request.frecuenciaAhorro()
+                normalizarFrecuenciaParaPython(request.frecuenciaAhorro())
         );
     }
 

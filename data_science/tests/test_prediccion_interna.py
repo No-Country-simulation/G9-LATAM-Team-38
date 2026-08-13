@@ -43,12 +43,10 @@ def test_perfil_valor_es_etiqueta_de_texto_no_indice_numerico():
     assert valor in ETIQUETAS_PERFIL_VALIDAS
 
 
-def test_frecuencia_ahorro_acepta_los_6_valores_que_puede_enviar_java():
-    # AnalisisRequest.java valida frecuenciaAhorro contra 6 valores (Nula, Muy baja,
-    # Baja, Media, Alta, Muy alta); frecuencia_ahorro no es feature del modelo
-    # (calcular_perfil solo usa ingreso_mensual y nivel_endeudamiento), asi que
-    # ampliar el enum es un cambio de validacion puro.
-    for valor in ["Nula", "Muy baja", "Baja", "Media", "Alta", "Muy alta"]:
+def test_frecuencia_ahorro_acepta_baja_media_alta():
+    # Contrato acordado con el equipo (reunion 2026-08-13): frecuencia_ahorro se
+    # queda en 3 valores (Baja/Media/Alta) en front y back, no se amplia.
+    for valor in ["Baja", "Media", "Alta"]:
         payload = {**PAYLOAD_VALIDO, "frecuenciaAhorro": valor}
         with TestClient(app) as client:
             response = client.post("/prediccion-interna", json=payload)
