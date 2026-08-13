@@ -27,10 +27,12 @@ logger = logging.getLogger("financeai.data_science")
 MODELS_DIR = Path(__file__).parent / "models"
 CLASIFICADOR_GASTOS_PATH = MODELS_DIR / "clasificador_gastos.pkl"
 PERFIL_FINANCIERO_PATH = MODELS_DIR / "perfil_financiero.pkl"
+CODIFICADOR_PERFIL_PATH = MODELS_DIR / "codificador_perfil.pkl"
 MODEL_CHECKSUMS_PATH = MODELS_DIR / "SHA256SUMS"
 MODEL_FILES = {
     "clasificador_gastos.pkl": CLASIFICADOR_GASTOS_PATH,
     "perfil_financiero.pkl": PERFIL_FINANCIERO_PATH,
+    "codificador_perfil.pkl": CODIFICADOR_PERFIL_PATH,
 }
 
 # Diccionario en memoria donde viven los modelos ya cargados
@@ -104,6 +106,7 @@ async def lifespan(app: FastAPI):
         logger.info("Integridad de los modelos verificada correctamente")
         modelos["clasificador_gastos"] = cargar_modelo(CLASIFICADOR_GASTOS_PATH)
         modelos["perfil_financiero"] = cargar_modelo(PERFIL_FINANCIERO_PATH)
+        modelos["codificador_perfil"] = cargar_modelo(CODIFICADOR_PERFIL_PATH)
         logger.info("Modelos cargados correctamente: %s", list(modelos.keys()))
     except FileNotFoundError as e:
         logger.error("No se encontro el archivo de modelo: %s", e.filename)
@@ -311,8 +314,11 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
             detail=f"Error al calcular el perfil financiero: {e}",
         ) from e
 
+    codificador_perfil = modelos["codificador_perfil"]
+    etiqueta_perfil = codificador_perfil.inverse_transform([prediccion])[0]
+
     return PerfilResponse(
-        valor=str(prediccion),
+        valor=str(etiqueta_perfil),
         features_usadas=FeaturesPerfil(
             ingreso_mensual=payload.ingreso_mensual,
             nivel_endeudamiento=payload.nivel_endeudamiento,
