@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bot, PlusCircle, Trash2, AlertCircle, BadgeCheck,
   X, Sparkles, WalletCards, ChartNoAxesCombined, UsersRound,
@@ -52,6 +52,10 @@ export default function Home() {
   const [transacciones, setTransacciones] = useState<Transaccion[]>([
     { id: "1", descripcion: "", monto: "" },
   ]);
+
+  // Guarda la transacción nueva que debe recibir el foco después de crearla.
+  const [transaccionParaEnfocar, setTransaccionParaEnfocar] = useState<string | null>(null);
+  const nuevaTransaccionRef = useRef<HTMLInputElement | null>(null);
 
   const [resultado, setResultado] = useState<ResultadoAnalisis | null>(null);
   const [generandoPDF, setGenerandoPDF] = useState(false);
@@ -147,6 +151,52 @@ export default function Home() {
   }, [modoIngresoDatos, ingresoMensual, transacciones]);
 
 
+
+  const agregarTransaccion = () => {
+    // No permitimos crear otra fila mientras exista alguna transacción incompleta.
+    const todasCompletas = transacciones.every(
+      (t) =>
+        t.descripcion.trim() !== "" &&
+        t.monto.trim() !== "" &&
+        !isNaN(parseFloat(t.monto)) &&
+        parseFloat(t.monto) > 0
+    );
+
+    if (!todasCompletas) {
+      setMensajeAdvertencia(
+        "Completa la descripción y el monto de las transacciones antes de añadir otra."
+      );
+      return;
+    }
+
+    // La nueva transacción se coloca al principio de la lista.
+    const nuevaTransaccion = {
+      id: Date.now().toString(),
+      descripcion: "",
+      monto: "",
+    };
+
+    setTransaccionParaEnfocar(nuevaTransaccion.id);
+    setTransacciones([nuevaTransaccion, ...transacciones]);
+  };
+
+  // Cuando React termina de renderizar la nueva fila, colocamos el cursor
+  // automáticamente en su campo de descripción.
+  useEffect(() => {
+    if (transaccionParaEnfocar) {
+      nuevaTransaccionRef.current?.focus();
+      setTransaccionParaEnfocar(null);
+    }
+  }, [transacciones, transaccionParaEnfocar]);
+
+  const manejarEnterTransaccion = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      agregarTransaccion();
+    }
+  };
 
   const eliminarTransaccion = (id: string) => {
     setTransacciones(transacciones.filter((t) => t.id !== id));
@@ -412,13 +462,19 @@ export default function Home() {
     return "#ef4444";
   };
 
-  // Color dinámico según el porcentaje que representa cada gasto.
-  const getExpenseColor = (percentage: number) => {
-    if (percentage <= 20) return "#22c55e";
-    if (percentage <= 40) return "#eab308";
-    if (percentage <= 60) return "#f97316";
-    return "#ef4444";
-  };
+  // Paleta amplia para diferenciar las transacciones en la barra y la leyenda.
+  // Tenemos 30 colores y un fallback circular para que nunca falte un color.
+  const expenseColors = [
+    "#38BDF8", "#F97316", "#22C55E", "#A855F7", "#F43F5E",
+    "#EAB308", "#14B8A6", "#6366F1", "#EC4899", "#84CC16",
+    "#06B6D4", "#8B5CF6", "#EF4444", "#F59E0B", "#10B981",
+    "#3B82F6", "#D946EF", "#65A30D", "#0EA5E9", "#7C3AED",
+    "#FB7185", "#CA8A04", "#059669", "#2563EB", "#C026D3",
+    "#4D7C0F", "#0284C7", "#9333EA", "#E11D48", "#B45309",
+  ];
+
+  const getExpenseColor = (index: number) =>
+    expenseColors[index % expenseColors.length];
 
   return (
     <div className="h-screen w-screen bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col justify-between selection:bg-[var(--brand-accent)]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300">
@@ -537,7 +593,7 @@ export default function Home() {
                       Transacciones recientes
                     </label>
                     <button
-                      onClick={() => setTransacciones([...transacciones, { id: Date.now().toString(), descripcion: "", monto: "" }])}
+                      onClick={agregarTransaccion}
                       type="button"
                       className="text-[var(--brand-accent)] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
                     >
@@ -549,12 +605,18 @@ export default function Home() {
                     {transacciones.map((item) => (
                       <div key={item.id} className="flex items-center gap-2 group">
                         <input
+                          ref={
+                            item.id === transaccionParaEnfocar
+                              ? nuevaTransaccionRef
+                              : undefined
+                          }
                           type="text"
                           placeholder="Descripción"
                           value={item.descripcion}
                           onChange={(e) =>
                             actualizarTransaccion(item.id, "descripcion", e.target.value)
                           }
+                          onKeyDown={manejarEnterTransaccion}
                           className={`flex-grow bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-2.5 py-1 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)]`}
                         />
                         <div className="relative w-24 flex-shrink-0">
@@ -567,7 +629,10 @@ export default function Home() {
                             onChange={(e) =>
                               actualizarTransaccion(item.id, "monto", e.target.value)
                             }
-                            onKeyDown={preventInvalidKeys}
+                            onKeyDown={(e) => {
+                              preventInvalidKeys(e);
+                              manejarEnterTransaccion(e);
+                            }}
                             className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg pl-4 pr-1.5 py-1 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
                           />
                         </div>
@@ -682,15 +747,20 @@ export default function Home() {
                   </div>
 
                   {/* Barra seccionada */}
-                  <div className={`w-full h-3 rounded-full overflow-hidden flex bg-[var(--brand-accent-hover)] shadow-inner`}>
+                  <div
+                    className={`w-full h-3 rounded-full overflow-hidden flex bg-[var(--brand-accent-hover)] shadow-inner`}
+                    role="img"
+                    aria-label="Barra de distribución de gastos"
+                  >
                     {(resultado.desglose ?? []).map((item, idx) => (
                       <div
-                        key={idx}
+                        key={`${item.descripcion}-${idx}`}
                         style={{
-                          width: `${item.porcentaje}%`,
-                          backgroundColor: getExpenseColor(item.porcentaje),
+                          width: `${Math.max(item.porcentaje, 0)}%`,
+                          minWidth: item.porcentaje > 0 ? "2px" : "0px",
+                          backgroundColor: getExpenseColor(idx),
                         }}
-                        className="h-full transition-all duration-500"
+                        className="h-full transition-all duration-500 hover:brightness-125"
                         title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
                       />
                     ))}
@@ -699,10 +769,14 @@ export default function Home() {
                   {/* Leyenda de transacciones debajo de la barra */}
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
                     {(resultado.desglose ?? []).map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-1 text-[10.5px]">
+                      <div
+                        key={`${item.descripcion}-${idx}`}
+                        className="flex items-center gap-1 text-[10.5px]"
+                        title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
+                      >
                         <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getExpenseColor(item.porcentaje) }}
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: getExpenseColor(idx) }}
                         ></span>
                         <span className="text-[var(--brand-muted)]">{item.descripcion}:</span>
                         <span className="font-bold">${item.monto}</span>
