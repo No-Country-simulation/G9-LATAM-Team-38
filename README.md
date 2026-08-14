@@ -51,6 +51,14 @@ El proyecto está fundamentado en una arquitectura de microservicios orientada a
 
 ---
 
+## 📚 Datos de Entrenamiento de los Modelos
+
+Para mayor transparencia sobre nuestro proceso de Data Science, dejamos a disposición la información y el detalle de cómo se entrenaron los modelos de Machine Learning utilizados en el proyecto:
+
+👉 **[Datos de entrenamiento - Google Drive](#)** *(Reemplazar con el link real de Drive)*
+
+---
+
 ## 👥 Equipo Dinamita (G9 LATAM Team 38)
 
 El talento, la disciplina y la ingeniería detrás del código:
@@ -98,10 +106,25 @@ El talento, la disciplina y la ingeniería detrás del código:
 
 ---
 
+## 🚧 Mejoras a Futuro
+
+Como todo MVP, Finance IA tiene un camino de crecimiento por delante. Estas son algunas de las mejoras que contemplamos a corto y mediano plazo:
+
+* 📅 **Trazabilidad de transacciones:** Incorporar el detalle de fecha de ingreso en las transacciones a lo largo de todo el ecosistema (Frontend, Backend, Base de Datos) y reflejarlo también en los reportes PDF generados.
+* 🔒 **Fortalecimiento de seguridad:** Mejorar el algoritmo de hashing de contraseñas para reforzar la protección de las credenciales de los usuarios.
+* 🧠 **Evolución de los modelos:** Ampliar el conocimiento y la capacidad predictiva de los modelos de Machine Learning con mayor volumen y diversidad de datos.
+
+---
+
 ## 🔗 Referencias del Proyecto
 
 * 📋 **Tablero de Gestión:** [Trello Oficial - Team 38](https://trello.com/b/3mjaUnQb/finance-ia-team-38)
 * 🌐 **Iniciativas:** [NoCountry Tech](https://nocountry.tech/) • [Alura Latam](https://www.aluracursos.com/)
+---
+
+## ⚖️ Licencia y Aviso Legal
+
+Este software se proporciona sin garantías de ningún tipo, expresas o implícitas. Los autores no asumen responsabilidad por posibles errores, pérdida de datos o problemas derivados de su uso. Este proyecto es una prueba de concepto y no cuenta con soporte técnico ni mantenimiento activo.
 
 ---
 
