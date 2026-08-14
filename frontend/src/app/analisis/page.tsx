@@ -76,6 +76,41 @@ export default function Home() {
     }
   }, []);
 
+  // Cargar estado guardado al regresar a la página
+  useEffect(() => {
+    const savedState = sessionStorage.getItem("finance_analisis_state");
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (parsed.ingresoMensual) setIngresoMensual(parsed.ingresoMensual);
+        if (parsed.modoIngresoDatos !== undefined) setModoIngresoDatos(parsed.modoIngresoDatos);
+        if (parsed.endeudamientoManual) setEndeudamientoManual(parsed.endeudamientoManual);
+        if (parsed.frecuenciaAhorroManual) setFrecuenciaAhorroManual(parsed.frecuenciaAhorroManual);
+        if (parsed.transacciones && parsed.transacciones.length > 0) setTransacciones(parsed.transacciones);
+        if (parsed.resultado !== undefined) setResultado(parsed.resultado);
+        if (parsed.endeudamientoAuto) setEndeudamientoAuto(parsed.endeudamientoAuto);
+        if (parsed.frecuenciaAhorroAuto) setFrecuenciaAhorroAuto(parsed.frecuenciaAhorroAuto);
+      } catch (e) {
+        console.error("Error al cargar estado de sessionStorage", e);
+      }
+    }
+  }, []);
+
+  // Guardar estado cada vez que el usuario modifica algo
+  useEffect(() => {
+    const estado = {
+      ingresoMensual,
+      modoIngresoDatos,
+      endeudamientoManual,
+      frecuenciaAhorroManual,
+      transacciones,
+      resultado,
+      endeudamientoAuto,
+      frecuenciaAhorroAuto
+    };
+    sessionStorage.setItem("finance_analisis_state", JSON.stringify(estado));
+  }, [ingresoMensual, modoIngresoDatos, endeudamientoManual, frecuenciaAhorroManual, transacciones, resultado, endeudamientoAuto, frecuenciaAhorroAuto]);
+
   const handleLogout = () => {
     localStorage.removeItem("finance_token");
     localStorage.removeItem("finance_username");
@@ -192,17 +227,77 @@ export default function Home() {
       const pageHeight = pdf.internal.pageSize.getHeight();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      let heightLeft = pdfHeight;
-      let position = 0;
+      const headerHeight = 30; // 30mm 
+      const footerHeight = 20; // 20mm
+      const visibleWindow = pageHeight - headerHeight - footerHeight; 
+      
+      let currentImgY = 0; 
 
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      // Función para dibujar Header y Footer
+      const drawHeaderAndFooter = () => {
+        // TOP FRAME (Thin blue line)
+        pdf.setFillColor(30, 58, 138); 
+        pdf.rect(0, 0, pdfWidth, 2, 'F'); 
 
-      while (heightLeft >= 0) {
-        position = position - pageHeight;
+        // HEADER BACKGROUND (White background)
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 2, pdfWidth, headerHeight - 2, 'F');
+
+        // HEADER TEXT - Left
+        pdf.setTextColor(23, 37, 84); // #172554
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(22);
+        pdf.text("FINANCE AI", 15, 16);
+        
+        pdf.setTextColor(100, 116, 139); // #64748b
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.text("REPORTE ANALÍTICO EMPRESARIAL", 15, 22);
+
+        // HEADER TEXT - Right
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        const dateStr = `Generado el: ${new Date().toLocaleDateString()}`;
+        const userStr = `Usuario: ${username || 'N/A'}`;
+        const idStr = `ID Transacción: #${Date.now().toString().slice(-6)}`;
+        
+        pdf.text(dateStr, pdfWidth - 15, 12, { align: 'right' });
+        pdf.text(userStr, pdfWidth - 15, 17, { align: 'right' });
+        pdf.text(idStr, pdfWidth - 15, 22, { align: 'right' });
+
+        // Header underline
+        pdf.setDrawColor(30, 58, 138);
+        pdf.setLineWidth(1);
+        pdf.line(15, 26, pdfWidth - 15, 26);
+
+        // FOOTER BACKGROUND (White background)
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pageHeight - footerHeight, pdfWidth, footerHeight, 'F');
+
+        // FOOTER TEXT
+        pdf.setTextColor(148, 163, 184); // #94a3b8
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.text("Documento hecho con cariño para ayudarte a mejorar tus finanzas.", 15, pageHeight - 9);
+        pdf.text("G9 LATAM Team 38", pdfWidth - 15, pageHeight - 9, { align: 'right' });
+
+        // BOTTOM FRAME (Thick blue line)
+        pdf.setFillColor(30, 58, 138);
+        pdf.rect(0, pageHeight - 4, pdfWidth, 4, 'F'); 
+      };
+
+      // Primera página
+      pdf.addImage(imgData, "PNG", 0, currentImgY, pdfWidth, pdfHeight);
+      drawHeaderAndFooter();
+      
+      currentImgY = -(pageHeight - footerHeight);
+
+      // Páginas subsecuentes
+      while ((currentImgY + pdfHeight) > headerHeight) {
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, "PNG", 0, currentImgY + headerHeight, pdfWidth, pdfHeight);
+        drawHeaderAndFooter();
+        currentImgY -= visibleWindow;
       }
 
       pdf.save(`Analisis_Financiero_${username || 'Usuario'}.pdf`);
@@ -294,8 +389,8 @@ export default function Home() {
       nivelEndeudamiento = end;
       
       const frec = frecuenciaAhorroManual.trim().toLowerCase();
-      if (!["muy alta", "alta", "media", "baja", "nula"].includes(frec)) {
-        setMensajeAdvertencia("La frecuencia de ahorro debe ser Muy alta, Alta, Media, Baja o Nula.");
+      if (!["alta", "media", "baja"].includes(frec)) {
+        setMensajeAdvertencia("La frecuencia de ahorro debe ser Alta, Media o Baja.");
         setCargando(false);
         return;
       }
@@ -345,15 +440,28 @@ export default function Home() {
       if (ahorroLower.includes("alta") || ahorroLower.includes("alto")) ahorroNum = 80;
       if (ahorroLower.includes("baja") || ahorroLower.includes("bajo") || ahorroLower.includes("nula")) ahorroNum = 20;
 
-      const desglose = transaccionesValidas.map(t => {
-        const montoNum = parseFloat(t.monto) || 0;
-        const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
-        return {
-          descripcion: t.descripcion || "Sin nombre",
-          monto: montoNum,
-          porcentaje
-        };
-      });
+      let desglose = [];
+      if (data.resumen_gastos) {
+        desglose = Object.entries(data.resumen_gastos).map(([categoria, monto]) => {
+          const montoNum = Number(monto) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: categoria,
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      } else {
+        desglose = transaccionesValidas.map(t => {
+          const montoNum = parseFloat(t.monto) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: t.descripcion || "Sin nombre",
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      }
 
       setResultado({
         confianza: Math.round((data.probabilidad || 0.88) * 100),
@@ -412,12 +520,17 @@ export default function Home() {
     return "#ef4444";
   };
 
-  // Color dinámico según el porcentaje que representa cada gasto.
-  const getExpenseColor = (percentage: number) => {
-    if (percentage <= 20) return "#22c55e";
-    if (percentage <= 40) return "#eab308";
-    if (percentage <= 60) return "#f97316";
-    return "#ef4444";
+  // Color dinámico según la categoría (para que cada una tenga su propio color visual)
+  const getExpenseColor = (categoria: string) => {
+    const cat = categoria.toLowerCase();
+    if (cat.includes("alimentacion") || cat.includes("alimentación")) return "#eab308"; // Amarillo
+    if (cat.includes("transporte")) return "#3b82f6"; // Azul
+    if (cat.includes("salud")) return "#ef4444"; // Rojo/Rosa
+    if (cat.includes("vivienda")) return "#f97316"; // Naranja
+    if (cat.includes("educacion") || cat.includes("educación")) return "#8b5cf6"; // Morado
+    if (cat.includes("ocio") || cat.includes("entretenimiento")) return "#ec4899"; // Fucsia
+    if (cat.includes("servicios")) return "#06b6d4"; // Cyan
+    return "#22c55e"; // Verde por defecto para "Otros"
   };
 
   return (
@@ -513,11 +626,9 @@ export default function Home() {
                         onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
                         className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] appearance-none cursor-pointer`}
                       >
-                        <option value="Muy alta">Muy alta</option>
                         <option value="Alta">Alta</option>
                         <option value="Media">Media</option>
                         <option value="Baja">Baja</option>
-                        <option value="Nula">Muy baja / Nula</option>
                       </select>
                     ) : (
                       <input
@@ -689,7 +800,7 @@ export default function Home() {
                         key={idx}
                         style={{
                           width: `${item.porcentaje}%`,
-                          backgroundColor: getExpenseColor(item.porcentaje),
+                          backgroundColor: getExpenseColor(item.descripcion),
                         }}
                         className="h-full transition-all duration-500"
                         title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
@@ -703,7 +814,7 @@ export default function Home() {
                       <div key={idx} className="flex items-center gap-1 text-[10.5px]">
                         <span
                           className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getExpenseColor(item.porcentaje) }}
+                          style={{ backgroundColor: getExpenseColor(item.descripcion) }}
                         ></span>
                         <span className="text-[var(--brand-muted)]">{item.descripcion}:</span>
                         <span className="font-bold">${item.monto}</span>
@@ -870,18 +981,9 @@ export default function Home() {
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
           <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative flex flex-col" style={{ width: '794px', minHeight: '1123px' }}>
             <div className="flex-1">
-            {/* Header */}
-            <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
-              <div>
-                <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
-                <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
-              </div>
-              <div className="text-right text-xs text-[#64748b] font-medium">
-                <p>Generado el: {new Date().toLocaleDateString()}</p>
-                <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
-                <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
-              </div>
-            </div>
+            
+            {/* Espaciador invisible para que el header nativo de jsPDF no tape contenido en la página 1 */}
+            <div style={{ height: '110px' }}></div>
 
             {/* Resumen Ejecutivo */}
             <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
@@ -959,15 +1061,6 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            </div>
-
-            {/* Footer */}
-            <div className="w-full pt-8 mt-auto">
-              <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
-                <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1"><Sparkles size={12} /> G9 LATAM Team 38</p>
-              </div>
-              <div className="h-4 w-[calc(100%+6rem)] bg-[#1e3a8a] absolute bottom-0 -ml-12"></div>
             </div>
           </div>
         </div>

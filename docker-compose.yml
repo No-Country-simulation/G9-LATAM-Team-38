@@ -4,26 +4,25 @@ networks:
 
 services:
 
-  # Microservicio Python (FastAPI) — Modelo 1 + Modelo 2, puerto interno 8000
-  # data-science:
-  #   build:
-  #     context: ./data_science
-  #     dockerfile: Dockerfile
-  #   container_name: financeai-data-science
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - financeai-network
-  #   # No se publica al host: solo Backend lo consume dentro de la red interna de Docker
-  #   expose:
-  #     - "8000"
-  #   healthcheck:
-  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 15s
-  #   restart: unless-stopped
+  # Microservicio Python (FastAPI) — Modelo 1 + Modelo 2, puerto 8000
+  data-science:
+    build:
+      context: ./data_science
+      dockerfile: Dockerfile
+    container_name: financeai-data-science
+    env_file:
+      - .env
+    networks:
+      - financeai-network
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
 
   # Base de Datos MySQL
   db:
@@ -52,13 +51,16 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://financeai-db:3306/hackathon_finance_ai?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+      - SERVICIO_IA_URL=http://financeai-data-science:8000
     ports:
       - "8080:8080"
     networks:
       - financeai-network
     depends_on:
       - db
+      - data-science
     restart: unless-stopped
+
 
   # Frontend Next.js — expone la UI pública en el puerto 3000
   frontend:

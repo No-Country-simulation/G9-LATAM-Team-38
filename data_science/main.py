@@ -9,7 +9,7 @@ from typing import List, Optional, Any
 
 import joblib
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, AliasChoices
 from pydantic.alias_generators import to_camel
 
 # --------------------------------------------------------------------------
@@ -151,7 +151,7 @@ class Transaccion(BaseSchema):
         max_length=500,
         description="Texto de la transaccion, entrada del Modelo 1 (clasificador de gastos)",
     )
-    monto: float = Field(..., gt=0, description="Monto de la transaccion, debe ser positivo")
+    monto: float = Field(..., gt=0, validation_alias=AliasChoices("monto", "valor"), description="Monto de la transaccion, debe ser positivo")
     fecha: Optional[date] = Field(default=None, description="Fecha ISO 8601 (YYYY-MM-DD)")
 
     @field_validator("descripcion")
@@ -176,9 +176,9 @@ class TransaccionesRequest(BaseSchema):
         le=100,
         description="Nivel de endeudamiento como porcentaje (0-100), entrada cruda del Modelo 2",
     )
-    frecuencia_ahorro: Optional[FrecuenciaAhorro] = Field(
+    frecuencia_ahorro: Optional[str] = Field(
         default=None,
-        description="Frecuencia de ahorro del usuario (Alta/Media/Baja)",
+        description="Frecuencia de ahorro del usuario",
     )
 
     model_config = ConfigDict(
@@ -322,7 +322,7 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
         features_usadas=FeaturesPerfil(
             ingreso_mensual=payload.ingreso_mensual,
             nivel_endeudamiento=payload.nivel_endeudamiento,
-            frecuencia_ahorro=payload.frecuencia_ahorro.value if payload.frecuencia_ahorro else None,
+            frecuencia_ahorro=payload.frecuencia_ahorro if payload.frecuencia_ahorro else None,
             total_gastos=total_gastos,
             promedio_gasto=promedio_gasto,
             numero_transacciones=num_tx,
@@ -360,3 +360,34 @@ def predict_internal(payload: TransaccionesRequest):
     que nombra este endpoint como /predict-internal.
     """
     return prediccion_interna(payload)
+
+
+class TransaccionSimpleRequest(BaseSchema):
+    descripcion: str
+    monto: float = Field(..., gt=0, validation_alias=AliasChoices("monto", "valor"))
+
+
+@app.post("/clasificar-transaccion")
+def clasificar_transaccion_endpoint(payload: TransaccionSimpleRequest):
+    """Endpoint para clasificar una transaccion individual."""
+    modelo_gastos = modelos.get("clasificador_gastos")
+    if modelo_gastos is None:
+        raise HTTPException(
+            status_code=503,
+            detail="El modelo clasificador de gastos no esta cargado en memoria.",
+        )
+    if not _tiene_predict(modelo_gastos):
+        raise HTTPException(
+            status_code=500,
+            detail="El modelo clasificador de gastos no expone metodo predict().",
+        )
+    try:
+        prediccion = modelo_gastos.predict([payload.descripcion])[0]
+        return {"categoria": str(prediccion)}
+    except Exception as e:
+        logger.exception("Fallo al clasificar transaccion individual")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al clasificar transaccion: {e}",
+        )
+
