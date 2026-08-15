@@ -221,6 +221,41 @@ export default function Home() {
 
   const [idTransaccion] = useState<string>("256406");
 
+  const findCleanCutY = (canvas: HTMLCanvasElement, startYPx: number, maxSearchPx: number): number => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return startYPx;
+
+    const width = canvas.width;
+    const targetY = Math.min(startYPx, canvas.height - 1);
+    const minY = Math.max(0, targetY - maxSearchPx);
+
+    try {
+      const imgData = ctx.getImageData(0, minY, width, targetY - minY);
+      const data = imgData.data;
+
+      for (let y = targetY - minY - 1; y >= 0; y--) {
+        let isRowPureWhite = true;
+        for (let x = 30; x < width - 30; x += 6) {
+          const idx = (y * width + x) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          if (r < 245 || g < 245 || b < 245) {
+            isRowPureWhite = false;
+            break;
+          }
+        }
+        if (isRowPureWhite) {
+          return minY + y;
+        }
+      }
+    } catch (e) {
+      console.warn("Error buscando corte limpio:", e);
+    }
+
+    return startYPx;
+  };
+
   const generarPDF = async () => {
     const headerEl = document.getElementById("pdf-header");
     const footerEl = document.getElementById("pdf-footer");
@@ -259,7 +294,7 @@ export default function Home() {
       const availableBodyHeightMm = pdfPageHeight - headerHeightMm - footerHeightMm;
 
       const pxPerMm = bodyCanvas.width / pdfWidth;
-      const sliceHeightPx = availableBodyHeightMm * pxPerMm;
+      const sliceHeightPx = Math.floor(availableBodyHeightMm * pxPerMm);
 
       let sourceYPx = 0;
       let remainingBodyPx = bodyCanvas.height;
@@ -276,7 +311,17 @@ export default function Home() {
         // Dibujar pie de página en la parte inferior de cada página
         pdf.addImage(footerImgData, "PNG", 0, pdfPageHeight - footerHeightMm, pdfWidth, footerHeightMm);
 
-        const currentSlicePx = Math.min(sliceHeightPx, remainingBodyPx);
+        let currentSlicePx = Math.min(sliceHeightPx, remainingBodyPx);
+
+        // Si la cantidad de contenido restante supera una página, buscar una línea blanca limpia entre elementos
+        if (remainingBodyPx > sliceHeightPx) {
+          const candidateCutY = sourceYPx + sliceHeightPx;
+          const cleanCutY = findCleanCutY(bodyCanvas, candidateCutY, 100);
+          const computedSlice = cleanCutY - sourceYPx;
+          if (computedSlice > 50) {
+            currentSlicePx = computedSlice;
+          }
+        }
 
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = bodyCanvas.width;
@@ -993,62 +1038,62 @@ export default function Home() {
             </div>
 
             {/* Body */}
-            <div id="pdf-body" className="w-full bg-white px-8 py-4 box-border space-y-6">
+            <div id="pdf-body" className="w-full bg-white px-8 py-2 box-border space-y-3.5">
               {/* Resumen Ejecutivo */}
-              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
-                  <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
+              <h2 className="text-base font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2.5">Resumen Ejecutivo</h2>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] shadow-sm">
+                  <p className="text-[11px] text-[#64748b] font-bold uppercase mb-0.5">Ingresos Declarados</p>
+                  <p className="text-xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
                 </div>
-                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
-                  <p className="text-2xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
+                <div className="bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] shadow-sm">
+                  <p className="text-[11px] text-[#64748b] font-bold uppercase mb-0.5">Gastos Identificados</p>
+                  <p className="text-xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
                 </div>
-                <div className="bg-[#eff6ff] p-4 rounded-lg border border-[#bfdbfe] shadow-sm">
-                  <p className="text-xs text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
-                  <p className="text-2xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
+                <div className="bg-[#eff6ff] p-3 rounded-lg border border-[#bfdbfe] shadow-sm">
+                  <p className="text-[11px] text-[#2563eb] font-bold uppercase mb-0.5">Balance / Flujo</p>
+                  <p className="text-xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Diagnostico */}
-              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
-                  <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
-                  <p className="text-sm text-[#475569] mt-1">{resultado.mensaje}</p>
+              <h2 className="text-base font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2.5">Diagnóstico Financiero</h2>
+              <div className="grid grid-cols-4 gap-3 mb-3">
+                <div className="col-span-2 bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
+                  <p className="text-[11px] text-[#64748b] font-bold uppercase mb-0.5">Estado de Salud</p>
+                  <p className="text-base font-bold text-[#1e293b]">{resultado.estado}</p>
+                  <p className="text-xs text-[#475569] mt-0.5">{resultado.mensaje}</p>
                 </div>
 
-                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
-                  <span className="text-3xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
+                <div className="text-center bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                  <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Endeudamiento</p>
+                  <span className="text-2xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
                 </div>
 
-                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
-                  <span className="text-2xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
+                <div className="text-center bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                  <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Capacidad Ahorro</p>
+                  <span className="text-xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
                 </div>
               </div>
 
               {/* Desglose de Gastos */}
-              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
-              <div className="mb-6 overflow-hidden rounded-lg border border-[#e2e8f0]">
-                <table className="w-full text-left text-sm text-[#475569]">
-                  <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
+              <h2 className="text-base font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2.5">Desglose de Movimientos</h2>
+              <div className="mb-3 overflow-hidden rounded-lg border border-[#e2e8f0]">
+                <table className="w-full text-left text-xs text-[#475569]">
+                  <thead className="bg-[#f1f5f9] text-[11px] uppercase font-bold text-[#334155]">
                     <tr>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0]">Concepto</th>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Monto</th>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
+                      <th className="px-3 py-2 border-b border-[#e2e8f0]">Concepto</th>
+                      <th className="px-3 py-2 border-b border-[#e2e8f0] text-right">Monto</th>
+                      <th className="px-3 py-2 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f1f5f9]">
                     {resultado.desglose.map((item, idx) => (
                       <tr key={idx} className="bg-[#ffffff]">
-                        <td className="px-4 py-2.5 font-medium text-[#1e293b]">{item.descripcion}</td>
-                        <td className="px-4 py-2.5 text-right font-bold">${item.monto.toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right">
-                          <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
+                        <td className="px-3 py-1.5 font-medium text-[#1e293b]">{item.descripcion}</td>
+                        <td className="px-3 py-1.5 text-right font-bold">${item.monto.toLocaleString()}</td>
+                        <td className="px-3 py-1.5 text-right">
+                          <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-[10px] font-bold">{item.porcentaje.toFixed(1)}%</span>
                         </td>
                       </tr>
                     ))}
@@ -1057,15 +1102,15 @@ export default function Home() {
               </div>
 
               {/* Recomendaciones de IA */}
-              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
-              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-4">
-                <ul className="space-y-3">
+              <h2 className="text-base font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2.5">Plan de Acción / Sugerencias IA</h2>
+              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-3.5 mb-2">
+                <ul className="space-y-1.5">
                   {resultado.recomendaciones.map((rec, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <span className="text-[#4338ca] font-black text-sm flex-shrink-0 mt-[1px]">
+                      <span className="text-[#4338ca] font-black text-xs flex-shrink-0 mt-[1px]">
                         {index + 1}.
                       </span>
-                      <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
+                      <p className="text-[#1e1b4b] text-xs font-medium leading-normal">{rec}</p>
                     </li>
                   ))}
                 </ul>
