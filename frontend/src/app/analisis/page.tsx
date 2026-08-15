@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bot, PlusCircle, Trash2, AlertCircle, BadgeCheck,
   X, Sparkles, WalletCards, ChartNoAxesCombined, UsersRound,
@@ -41,9 +41,8 @@ interface Miembro {
 export default function Home() {
   const { theme } = useTheme();
   const [ingresoMensual, setIngresoMensual] = useState<string>("");
-  
-  const [modoIngresoDatos, setModoIngresoDatos] = useState<'auto' | 'manual' | null>(null);
-  const [mostrarModalModo, setMostrarModalModo] = useState<boolean>(false);
+
+  const [modoIngresoDatos, setModoIngresoDatos] = useState<'auto' | 'manual'>('auto');
   const [mensajeAdvertencia, setMensajeAdvertencia] = useState<string | null>(null);
 
   const [endeudamientoManual, setEndeudamientoManual] = useState<string>("");
@@ -52,6 +51,10 @@ export default function Home() {
   const [transacciones, setTransacciones] = useState<Transaccion[]>([
     { id: "1", descripcion: "", monto: "" },
   ]);
+
+  // Guarda la transacción nueva que debe recibir el foco después de crearla.
+  const [transaccionParaEnfocar, setTransaccionParaEnfocar] = useState<string | null>(null);
+  const nuevaTransaccionRef = useRef<HTMLInputElement | null>(null);
 
   const [resultado, setResultado] = useState<ResultadoAnalisis | null>(null);
   const [generandoPDF, setGenerandoPDF] = useState(false);
@@ -148,6 +151,52 @@ export default function Home() {
 
 
 
+  const agregarTransaccion = () => {
+    // No permitimos crear otra fila mientras exista alguna transacción incompleta.
+    const todasCompletas = transacciones.every(
+      (t) =>
+        t.descripcion.trim() !== "" &&
+        t.monto.trim() !== "" &&
+        !isNaN(parseFloat(t.monto)) &&
+        parseFloat(t.monto) > 0
+    );
+
+    if (!todasCompletas) {
+      setMensajeAdvertencia(
+        "Completa la descripción y el monto de las transacciones antes de añadir otra."
+      );
+      return;
+    }
+
+    // La nueva transacción se coloca al principio de la lista.
+    const nuevaTransaccion = {
+      id: Date.now().toString(),
+      descripcion: "",
+      monto: "",
+    };
+
+    setTransaccionParaEnfocar(nuevaTransaccion.id);
+    setTransacciones([nuevaTransaccion, ...transacciones]);
+  };
+
+  // Cuando React termina de renderizar la nueva fila, colocamos el cursor
+  // automáticamente en su campo de descripción.
+  useEffect(() => {
+    if (transaccionParaEnfocar) {
+      nuevaTransaccionRef.current?.focus();
+      setTransaccionParaEnfocar(null);
+    }
+  }, [transacciones, transaccionParaEnfocar]);
+
+  const manejarEnterTransaccion = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      agregarTransaccion();
+    }
+  };
+
   const eliminarTransaccion = (id: string) => {
     setTransacciones(transacciones.filter((t) => t.id !== id));
   };
@@ -164,12 +213,6 @@ export default function Home() {
     );
   };
 
-  const manejarClickInputAvanzado = () => {
-    if (modoIngresoDatos === null) {
-      setMostrarModalModo(true);
-    }
-  };
-
   const preventInvalidKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (['e', 'E', '+', '-'].includes(e.key)) {
       e.preventDefault();
@@ -179,7 +222,7 @@ export default function Home() {
   const generarPDF = async () => {
     const elemento = document.getElementById("pdf-report-template");
     if (!elemento) return;
-    
+
     setGenerandoPDF(true);
     try {
       const canvas = await html2canvas(elemento, {
@@ -191,7 +234,7 @@ export default function Home() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       let heightLeft = pdfHeight;
       let position = 0;
 
@@ -217,24 +260,10 @@ export default function Home() {
     setResultado(null);
     setMensajeAdvertencia(null);
     setCargando(true);
-
-    const ingreso = parseFloat(ingresoMensual);
-    const modoActual =
-      typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
-
-    // VALIDACIÓN DEL INGRESO MENSUAL
-    if (
-      !ingresoMensual.trim() ||
-      isNaN(ingreso) ||
-      ingreso <= 0
-    ) {
-      setMensajeAdvertencia(
-        "Debes ingresar un valor válido superior a 0 en el ingreso mensual."
-      );
-      setCargando(false);
-      return;
-    }
-
+    
+    const ingreso = parseFloat(ingresoMensual) || 0;
+    const modoActual = typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
+    
     // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
     if (modoActual === null) {
       setMostrarModalModo(true);
@@ -292,7 +321,7 @@ export default function Home() {
         return;
       }
       nivelEndeudamiento = end;
-      
+
       const frec = frecuenciaAhorroManual.trim().toLowerCase();
       if (!["muy alta", "alta", "media", "baja", "nula"].includes(frec)) {
         setMensajeAdvertencia("La frecuencia de ahorro debe ser Muy alta, Alta, Media, Baja o Nula.");
@@ -327,7 +356,7 @@ export default function Home() {
       }
 
       const data = await response.json();
-      
+
       if (data.success === false || data.error) {
         setMensajeAdvertencia(data.error || "Datos financieros inválidos.");
         setCargando(false);
@@ -339,7 +368,7 @@ export default function Home() {
       // Si el backend no los devuelve en la respuesta actual, calculamos para la gráfica visual de manera ilustrativa
       const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? Math.round((totalGastos / ingreso) * 100);
       const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? "Media";
-      
+
       let ahorroNum = 50;
       const ahorroLower = freqTextResult.toLowerCase();
       if (ahorroLower.includes("alta") || ahorroLower.includes("alto")) ahorroNum = 80;
@@ -412,22 +441,28 @@ export default function Home() {
     return "#ef4444";
   };
 
-  // Color dinámico según el porcentaje que representa cada gasto.
-  const getExpenseColor = (percentage: number) => {
-    if (percentage <= 20) return "#22c55e";
-    if (percentage <= 40) return "#eab308";
-    if (percentage <= 60) return "#f97316";
-    return "#ef4444";
-  };
+  // Paleta amplia para diferenciar las transacciones en la barra y la leyenda.
+  // Tenemos 30 colores y un fallback circular para que nunca falte un color.
+  const expenseColors = [
+    "#38BDF8", "#F97316", "#22C55E", "#A855F7", "#F43F5E",
+    "#EAB308", "#14B8A6", "#6366F1", "#EC4899", "#84CC16",
+    "#06B6D4", "#8B5CF6", "#EF4444", "#F59E0B", "#10B981",
+    "#3B82F6", "#D946EF", "#65A30D", "#0EA5E9", "#7C3AED",
+    "#FB7185", "#CA8A04", "#059669", "#2563EB", "#C026D3",
+    "#4D7C0F", "#0284C7", "#9333EA", "#E11D48", "#B45309",
+  ];
+
+  const getExpenseColor = (index: number) =>
+    expenseColors[index % expenseColors.length];
 
   return (
     <div className="h-screen w-screen bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col justify-between selection:bg-[var(--brand-accent)]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300">
-      
+
       <GlobalHeader username={username || ""} onLogout={handleLogout} isAdmin={isAdmin} />
 
       {/* CONTENEDOR CENTRAL */}
       <div className="w-full max-w-7xl mx-auto my-1 flex-1 flex flex-col justify-center min-h-0">
-        
+
         {/* BANNER SUPERIOR */}
         <div className={`bg-[var(--brand-banner-bg)] border border-[var(--brand-border)] rounded-t-2xl px-5 py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center relative shadow-lg flex-shrink-0 transition-colors duration-300`}>
           <div className="z-10">
@@ -454,7 +489,7 @@ export default function Home() {
 
         {/* CONTENEDOR PRINCIPAL */}
         <main className={`bg-[var(--brand-card)] rounded-b-2xl p-4 md:p-5 grid grid-cols-1 lg:grid-cols-2 gap-5 shadow-2xl border border-[var(--brand-border)] flex-1 min-h-0 overflow-hidden transition-colors duration-300`}>
-          
+
           {/* COLUMNA IZQUIERDA (ENTRADA) */}
           <div className="flex flex-col gap-2 min-h-0">
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -468,65 +503,98 @@ export default function Home() {
 
             <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3.5 flex flex-col justify-between gap-3 flex-1 min-h-0 transition-colors duration-300`}>
               <div className="flex-1 min-h-0 flex flex-col gap-3">
-                
-                {/* Ingreso Mensual */}
-                <div>
-                  <label className={`block text-xs font-semibold text-[var(--brand-muted)] mb-1`}>
-                    Ingreso mensual ($)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={ingresoMensual}
-                    onChange={(e) => setIngresoMensual(e.target.value)}
-                    onKeyDown={preventInvalidKeys}
-                    placeholder="Ej. 4500"
-                    className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
-                  />
-                </div>
 
-                {/* Endeudamiento y Ahorro */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div onClick={manejarClickInputAvanzado} className={modoIngresoDatos === 'auto' ? "opacity-50 pointer-events-none" : ""}>
-                    <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1 whitespace-nowrap`}>
-                      Nivel de endeudamiento (%)
-                    </label>
-                    <input
-                      type={modoIngresoDatos === 'auto' ? "text" : "number"}
-                      min="0"
-                      value={modoIngresoDatos === 'auto' ? `${endeudamientoAuto}% (Automático)` : endeudamientoManual}
-                      onChange={(e) => setEndeudamientoManual(e.target.value)}
-                      onKeyDown={modoIngresoDatos === 'manual' ? preventInvalidKeys : undefined}
-                      placeholder="Ej. 25"
-                      readOnly={modoIngresoDatos !== 'manual'}
-                      className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass} ${modoIngresoDatos !== 'manual' ? 'cursor-pointer' : ''}`}
-                    />
+                <div className="flex flex-col gap-1.5">
+                  
+                  {/* FILA SUPERIOR: Ingreso Mensual y Toggle IA */}
+                  <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    
+                    {/* Ingreso Mensual (Ocupa el 60% del espacio) */}
+                    <div className="w-full sm:w-3/5">
+                      <label className={`block text-xs font-semibold text-[var(--brand-muted)] mb-1`}>
+                        Ingreso mensual ($)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={ingresoMensual}
+                        onChange={(e) => setIngresoMensual(e.target.value)}
+                        onKeyDown={preventInvalidKeys}
+                        placeholder="Ej. 4500"
+                        className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
+                      />
+                    </div>
+
+                    {/* Interruptor (Ocupa el 40% del espacio) */}
+                    <div className="w-full sm:w-2/5 flex items-center justify-between bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-2.5 h-[32px] transition-colors duration-300">
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <Bot size={14} className={`flex-shrink-0 text-[var(--brand-accent)] ${modoIngresoDatos === 'auto' ? 'animate-pulse' : 'opacity-50'}`} />
+                        <span className="text-[9.5px] font-bold tracking-wide text-[var(--brand-muted)] whitespace-nowrap truncate">
+                          Generado por FINANCEIA
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-2">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={modoIngresoDatos === 'auto'}
+                          onChange={(e) => {
+                            const nuevoModo = e.target.checked ? 'auto' : 'manual';
+                            setModoIngresoDatos(nuevoModo);
+                            if (nuevoModo === 'auto') {
+                              setEndeudamientoManual("");
+                              setFrecuenciaAhorroManual("Media");
+                            }
+                          }}
+                        />
+                        <div className="w-7 h-3.5 bg-gray-300/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-[var(--brand-accent)]"></div>
+                      </label>
+                    </div>
                   </div>
 
-                  <div onClick={manejarClickInputAvanzado} className={modoIngresoDatos === 'auto' ? "opacity-50 pointer-events-none" : ""}>
-                    <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1 whitespace-nowrap`}>
-                      Frecuencia de ahorro
-                    </label>
-                    {modoIngresoDatos === 'manual' ? (
-                      <select
-                        value={frecuenciaAhorroManual}
-                        onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
-                        className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] appearance-none cursor-pointer`}
-                      >
-                        <option value="Muy alta">Muy alta</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Media">Media</option>
-                        <option value="Baja">Baja</option>
-                        <option value="Nula">Muy baja / Nula</option>
-                      </select>
-                    ) : (
+                  {/* FILA INFERIOR: Endeudamiento y Ahorro */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className={modoIngresoDatos === 'auto' ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+                      <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1 whitespace-nowrap`}>
+                        Nivel de endeudamiento (%)
+                      </label>
                       <input
-                        type="text"
-                        value={modoIngresoDatos === 'auto' ? `${frecuenciaAhorroAuto} (Automático)` : frecuenciaAhorroManual}
-                        readOnly
-                        className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] cursor-pointer`}
+                        type={modoIngresoDatos === 'auto' ? "text" : "number"}
+                        min="0"
+                        value={modoIngresoDatos === 'auto' ? `${endeudamientoAuto}% (Automático)` : endeudamientoManual}
+                        onChange={(e) => setEndeudamientoManual(e.target.value)}
+                        onKeyDown={modoIngresoDatos === 'manual' ? preventInvalidKeys : undefined}
+                        placeholder="Ej. 25"
+                        readOnly={modoIngresoDatos !== 'manual'}
+                        className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
                       />
-                    )}
+                    </div>
+
+                    <div className={modoIngresoDatos === 'auto' ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+                      <label className={`block text-[11px] font-semibold text-[var(--brand-muted)] mb-1 whitespace-nowrap`}>
+                        Frecuencia de ahorro
+                      </label>
+                      {modoIngresoDatos === 'manual' ? (
+                        <select
+                          value={frecuenciaAhorroManual}
+                          onChange={(e) => setFrecuenciaAhorroManual(e.target.value)}
+                          className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] appearance-none cursor-pointer`}
+                        >
+                          <option value="Muy alta">Muy alta</option>
+                          <option value="Alta">Alta</option>
+                          <option value="Media">Media</option>
+                          <option value="Baja">Baja</option>
+                          <option value="Nula">Muy baja / Nula</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={`${frecuenciaAhorroAuto} (Automático)`}
+                          readOnly
+                          className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] cursor-pointer`}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -537,7 +605,7 @@ export default function Home() {
                       Transacciones recientes
                     </label>
                     <button
-                      onClick={() => setTransacciones([...transacciones, { id: Date.now().toString(), descripcion: "", monto: "" }])}
+                      onClick={agregarTransaccion}
                       type="button"
                       className="text-[var(--brand-accent)] hover:underline text-xs font-bold flex items-center gap-1 transition-colors"
                     >
@@ -549,12 +617,18 @@ export default function Home() {
                     {transacciones.map((item) => (
                       <div key={item.id} className="flex items-center gap-2 group">
                         <input
+                          ref={
+                            item.id === transaccionParaEnfocar
+                              ? nuevaTransaccionRef
+                              : undefined
+                          }
                           type="text"
                           placeholder="Descripción"
                           value={item.descripcion}
                           onChange={(e) =>
                             actualizarTransaccion(item.id, "descripcion", e.target.value)
                           }
+                          onKeyDown={manejarEnterTransaccion}
                           className={`flex-grow bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg px-2.5 py-1 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)]`}
                         />
                         <div className="relative w-24 flex-shrink-0">
@@ -567,7 +641,10 @@ export default function Home() {
                             onChange={(e) =>
                               actualizarTransaccion(item.id, "monto", e.target.value)
                             }
-                            onKeyDown={preventInvalidKeys}
+                            onKeyDown={(e) => {
+                              preventInvalidKeys(e);
+                              manejarEnterTransaccion(e);
+                            }}
                             className={`w-full bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-lg pl-4 pr-1.5 py-1 text-xs text-[var(--brand-text)] focus:outline-none focus:border-[var(--brand-accent)] ${noSpinnersClass}`}
                           />
                         </div>
@@ -605,7 +682,7 @@ export default function Home() {
               />
               <h3 className={`text-[var(--brand-muted)] font-bold tracking-widest text-[11px] uppercase`}>Resultado</h3>
             </div>
-            
+
             {cargando ? (
               <div className={`flex-1 border border-dashed border-[var(--brand-border)] rounded-xl flex flex-col items-center justify-center p-6 text-center`}>
                 <div className="w-8 h-8 border-4 border-[var(--brand-accent)] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -622,7 +699,7 @@ export default function Home() {
               </div>
             ) : (
               <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-y-auto transition-colors duration-300`}>
-                
+
                 {/* Diagnóstico superior */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-2">
                   {/* Círculos */}
@@ -683,15 +760,20 @@ export default function Home() {
                   </div>
 
                   {/* Barra seccionada */}
-                  <div className={`w-full h-3 rounded-full overflow-hidden flex bg-[var(--brand-accent-hover)] shadow-inner`}>
+                  <div
+                    className={`w-full h-3 rounded-full overflow-hidden flex bg-[var(--brand-accent-hover)] shadow-inner`}
+                    role="img"
+                    aria-label="Barra de distribución de gastos"
+                  >
                     {(resultado.desglose ?? []).map((item, idx) => (
                       <div
-                        key={idx}
+                        key={`${item.descripcion}-${idx}`}
                         style={{
-                          width: `${item.porcentaje}%`,
-                          backgroundColor: getExpenseColor(item.porcentaje),
+                          width: `${Math.max(item.porcentaje, 0)}%`,
+                          minWidth: item.porcentaje > 0 ? "2px" : "0px",
+                          backgroundColor: getExpenseColor(idx),
                         }}
-                        className="h-full transition-all duration-500"
+                        className="h-full transition-all duration-500 hover:brightness-125"
                         title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
                       />
                     ))}
@@ -700,10 +782,14 @@ export default function Home() {
                   {/* Leyenda de transacciones debajo de la barra */}
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
                     {(resultado.desglose ?? []).map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-1 text-[10.5px]">
+                      <div
+                        key={`${item.descripcion}-${idx}`}
+                        className="flex items-center gap-1 text-[10.5px]"
+                        title={`${item.descripcion}: $${item.monto} (${item.porcentaje.toFixed(1)}%)`}
+                      >
                         <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getExpenseColor(item.porcentaje) }}
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: getExpenseColor(idx) }}
                         ></span>
                         <span className="text-[var(--brand-muted)]">{item.descripcion}:</span>
                         <span className="font-bold">${item.monto}</span>
@@ -750,7 +836,7 @@ export default function Home() {
         </main>
       </div>
 
-            {/* FOOTER EQUIPO */}
+      {/* FOOTER EQUIPO */}
       <GlobalFooter>
         <button
           onClick={() => setMostrarMiembros(!mostrarMiembros)}
@@ -773,67 +859,20 @@ export default function Home() {
                   {miembro.linkedin && (
                     <a href={miembro.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:text-[var(--brand-text)] transition-transform duration-300 hover:scale-110" title="LinkedIn">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                       </svg>
                     </a>
                   )}
                   {miembro.github && (
                     <a href={miembro.github} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-accent)] hover:text-[var(--brand-text)] transition-transform duration-300 hover:scale-110" title="GitHub">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                       </svg>
                     </a>
                   )}
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-
-      
-      {/* MODAL PARA PREGUNTAR MODO DE INGRESO (AUTO/MANUAL) */}
-      {mostrarModalModo && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`bg-[var(--brand-card)] border border-[var(--brand-border)] rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center`}>
-            <button
-              onClick={() => setMostrarModalModo(false)}
-              className="absolute top-4 right-4 opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-200"
-            >
-              <X size={16} />
-            </button>
-            <Bot size={40} className="mx-auto mb-4 text-[var(--brand-accent)] transition-transform duration-300 hover:scale-110 hover:-rotate-3" />
-            <h3 className="text-lg font-bold mb-2">
-              Configuración Avanzada
-            </h3>
-            <p className={`text-xs text-[var(--brand-muted)] mb-6`}>
-              ¿Deseas que nuestra Inteligencia Artificial calcule tu nivel de endeudamiento y capacidad de ahorro automáticamente basado en tus ingresos y gastos, o prefieres ingresarlos manualmente?
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  setModoIngresoDatos('auto');
-                  setEndeudamientoManual("");
-                  setFrecuenciaAhorroManual("Media");
-                  setMostrarModalModo(false);
-                  setTimeout(() => ejecutarAnalisis('auto'), 50);
-                }}
-                className="w-full bg-[var(--brand-accent)] text-[var(--brand-bg)] hover:opacity-90 font-bold py-2.5 rounded-lg transition-all shadow-md text-sm"
-              >
-                Calcular automáticamente por mí
-              </button>
-              <button
-                onClick={() => {
-                  setModoIngresoDatos('manual');
-                  setMostrarModalModo(false);
-                }}
-                className={`w-full border-2 border-[var(--brand-border)] hover:bg-[var(--brand-accent)]/10 font-bold py-2.5 rounded-lg transition-all text-sm`}
-              >
-                Ingresar datos manualmente
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -870,95 +909,95 @@ export default function Home() {
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
           <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative flex flex-col" style={{ width: '794px', minHeight: '1123px' }}>
             <div className="flex-1">
-            {/* Header */}
-            <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
-              <div>
-                <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
-                <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
+              {/* Header */}
+              <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
+                <div>
+                  <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
+                  <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
+                </div>
+                <div className="text-right text-xs text-[#64748b] font-medium">
+                  <p>Generado el: {new Date().toLocaleDateString()}</p>
+                  <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
+                  <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
+                </div>
               </div>
-              <div className="text-right text-xs text-[#64748b] font-medium">
-                <p>Generado el: {new Date().toLocaleDateString()}</p>
-                <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
-                <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
-              </div>
-            </div>
 
-            {/* Resumen Ejecutivo */}
-            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
-                <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
+              {/* Resumen Ejecutivo */}
+              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
+                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
+                  <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
+                </div>
+                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
+                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
+                  <p className="text-2xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
+                </div>
+                <div className="bg-[#eff6ff] p-4 rounded-lg border border-[#bfdbfe] shadow-sm">
+                  <p className="text-xs text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
+                  <p className="text-2xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
+                </div>
               </div>
-              <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
-                <p className="text-2xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
-              </div>
-              <div className="bg-[#eff6ff] p-4 rounded-lg border border-[#bfdbfe] shadow-sm">
-                <p className="text-xs text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
-                <p className="text-2xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
-              </div>
-            </div>
 
-            {/* Diagnostico */}
-            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
-                <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
-                <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
-                <p className="text-sm text-[#475569] mt-1">{resultado.mensaje}</p>
-              </div>
-              
-              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
-                <span className="text-3xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
-              </div>
-              
-              <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
-                <span className="text-2xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
-              </div>
-            </div>
+              {/* Diagnostico */}
+              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
+                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
+                  <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
+                  <p className="text-sm text-[#475569] mt-1">{resultado.mensaje}</p>
+                </div>
 
-            {/* Desglose de Gastos */}
-            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
-            <div className="mb-8 overflow-hidden rounded-lg border border-[#e2e8f0]">
-              <table className="w-full text-left text-sm text-[#475569]">
-                <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
-                  <tr>
-                    <th className="px-4 py-3 border-b border-[#e2e8f0]">Concepto</th>
-                    <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Monto</th>
-                    <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f1f5f9]">
-                  {resultado.desglose.map((item, idx) => (
-                    <tr key={idx} className="bg-[#ffffff]">
-                      <td className="px-4 py-2.5 font-medium text-[#1e293b]">{item.descripcion}</td>
-                      <td className="px-4 py-2.5 text-right font-bold">${item.monto.toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
-                      </td>
+                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
+                  <span className="text-3xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
+                </div>
+
+                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
+                  <span className="text-2xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
+                </div>
+              </div>
+
+              {/* Desglose de Gastos */}
+              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
+              <div className="mb-8 overflow-hidden rounded-lg border border-[#e2e8f0]">
+                <table className="w-full text-left text-sm text-[#475569]">
+                  <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
+                    <tr>
+                      <th className="px-4 py-3 border-b border-[#e2e8f0]">Concepto</th>
+                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Monto</th>
+                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f5f9]">
+                    {resultado.desglose.map((item, idx) => (
+                      <tr key={idx} className="bg-[#ffffff]">
+                        <td className="px-4 py-2.5 font-medium text-[#1e293b]">{item.descripcion}</td>
+                        <td className="px-4 py-2.5 text-right font-bold">${item.monto.toLocaleString()}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-            {/* Recomendaciones de IA */}
-            <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
-            <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
-              <ul className="space-y-3">
-                {resultado.recomendaciones.map((rec, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-[#4338ca] font-black text-sm flex-shrink-0 mt-[1px]">
-                      {index + 1}.
-                    </span>
-                    <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              {/* Recomendaciones de IA */}
+              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
+              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
+                <ul className="space-y-3">
+                  {resultado.recomendaciones.map((rec, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-[#4338ca] font-black text-sm flex-shrink-0 mt-[1px]">
+                        {index + 1}.
+                      </span>
+                      <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
             {/* Footer */}

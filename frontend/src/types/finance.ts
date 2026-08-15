@@ -18,3 +18,17 @@ export interface AnalisisResponse {
     resumen_gastos: Record<string, number>;
     recomendaciones: string[];
 }
+
+export interface HistorialPage {
+    content: AnalisisResponse[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
+}
+
+export interface LoteResponse {
+    mensaje?: string;
+    exito?: boolean;
+    // Podemos agregar más campos en el futuro si el backend manda más detalles del CSV
+}

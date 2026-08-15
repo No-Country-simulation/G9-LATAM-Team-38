@@ -52,7 +52,6 @@ def test_frecuencia_ahorro_acepta_baja_media_alta():
             response = client.post("/prediccion-interna", json=payload)
         assert response.status_code == 200, f"fallo con frecuenciaAhorro={valor!r}"
 
-
 def test_descripcion_vacia_o_solo_espacios_es_rechazada():
     for descripcion in ["", "   "]:
         payload = {
