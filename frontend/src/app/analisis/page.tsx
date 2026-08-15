@@ -369,15 +369,28 @@ export default function Home() {
       if (ahorroLower.includes("alta") || ahorroLower.includes("alto")) ahorroNum = 80;
       if (ahorroLower.includes("baja") || ahorroLower.includes("bajo") || ahorroLower.includes("nula")) ahorroNum = 20;
 
-      const desglose = transaccionesValidas.map(t => {
-        const montoNum = parseFloat(t.monto) || 0;
-        const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
-        return {
-          descripcion: t.descripcion || "Sin nombre",
-          monto: montoNum,
-          porcentaje
-        };
-      });
+      let desglose = [];
+      if (data.resumen_gastos && typeof data.resumen_gastos === "object" && Object.keys(data.resumen_gastos).length > 0) {
+        desglose = Object.entries(data.resumen_gastos).map(([categoria, monto]) => {
+          const montoNum = typeof monto === "number" ? monto : parseFloat(monto as any) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: categoria,
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      } else {
+        desglose = transaccionesValidas.map(t => {
+          const montoNum = parseFloat(t.monto) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: t.descripcion || "Sin nombre",
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      }
 
       setResultado({
         confianza: Math.round((data.probabilidad || 0.88) * 100),
