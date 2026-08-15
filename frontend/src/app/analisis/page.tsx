@@ -264,12 +264,7 @@ export default function Home() {
     const ingreso = parseFloat(ingresoMensual) || 0;
     const modoActual = typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
     
-    // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
-    if (modoActual === null) {
-      setMostrarModalModo(true);
-      setCargando(false);
-      return;
-    }
+
 
     // VALIDACIÓN DE GASTOS
     const hayGastoInvalido = transacciones.some(
