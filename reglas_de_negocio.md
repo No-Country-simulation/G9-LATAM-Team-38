@@ -3,7 +3,7 @@
 **Proyecto:** Finance AI — Plataforma de Gestión y Diagnóstico Financiero con IA  
 **Organización:** No Country Simulation — G9 LATAM Team 38  
 **Autor Principal & Lead Technical Architect:** Marco Arias (Backend & Data/IA Lead)  
-**Versión:** 2.0.0 (Release Candidate) | **Estado:** Aprobado & En Producción  
+**Versión:** 0.0.1 (MVP Snapshot) | **Estado:** Aprobado & En Producción  
 
 ---
 
