@@ -39,6 +39,10 @@ wheels/
 *~
 .DS_Store
 
+# Estado local de herramientas de asistencia IA (worktrees, agentes, sesiones)
+.kilo/
+.claude/
+
 # Environment variables
 .env
 .env.local
