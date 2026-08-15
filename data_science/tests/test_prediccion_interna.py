@@ -51,3 +51,31 @@ def test_frecuencia_ahorro_acepta_baja_media_alta():
         with TestClient(app) as client:
             response = client.post("/prediccion-interna", json=payload)
         assert response.status_code == 200, f"fallo con frecuenciaAhorro={valor!r}"
+
+def test_descripcion_vacia_o_solo_espacios_es_rechazada():
+    for descripcion in ["", "   "]:
+        payload = {
+            **PAYLOAD_VALIDO,
+            "transacciones": [{"descripcion": descripcion, "monto": 100.0}],
+        }
+        with TestClient(app) as client:
+            response = client.post("/prediccion-interna", json=payload)
+        assert response.status_code == 422, f"fallo con descripcion={descripcion!r}"
+
+
+def test_monto_no_positivo_es_rechazado():
+    for monto in [0, -50.0]:
+        payload = {
+            **PAYLOAD_VALIDO,
+            "transacciones": [{"descripcion": "Compra cualquiera", "monto": monto}],
+        }
+        with TestClient(app) as client:
+            response = client.post("/prediccion-interna", json=payload)
+        assert response.status_code == 422, f"fallo con monto={monto!r}"
+
+
+def test_transacciones_vacias_es_rechazado():
+    payload = {**PAYLOAD_VALIDO, "transacciones": []}
+    with TestClient(app) as client:
+        response = client.post("/prediccion-interna", json=payload)
+    assert response.status_code == 422
