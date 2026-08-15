@@ -219,36 +219,97 @@ export default function Home() {
     }
   };
 
+  const [idTransaccion] = useState<string>("256406");
+
   const generarPDF = async () => {
-    const elemento = document.getElementById("pdf-report-template");
-    if (!elemento) return;
+    const headerEl = document.getElementById("pdf-header");
+    const footerEl = document.getElementById("pdf-footer");
+    const bodyEl = document.getElementById("pdf-body");
+
+    if (!headerEl || !footerEl || !bodyEl) return;
 
     setGenerandoPDF(true);
     try {
-      const canvas = await html2canvas(elemento, {
+      const headerCanvas = await html2canvas(headerEl, {
         scale: 2,
         useCORS: true,
+        backgroundColor: "#ffffff"
       });
-      const imgData = canvas.toDataURL("image/png");
+      const headerImgData = headerCanvas.toDataURL("image/png");
+
+      const footerCanvas = await html2canvas(footerEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+      const footerImgData = footerCanvas.toDataURL("image/png");
+
+      const bodyCanvas = await html2canvas(bodyEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfPageHeight = pdf.internal.pageSize.getHeight();
 
-      let heightLeft = pdfHeight;
-      let position = 0;
+      const headerHeightMm = (headerCanvas.height * pdfWidth) / headerCanvas.width;
+      const footerHeightMm = (footerCanvas.height * pdfWidth) / footerCanvas.width;
+      const availableBodyHeightMm = pdfPageHeight - headerHeightMm - footerHeightMm;
 
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      const pxPerMm = bodyCanvas.width / pdfWidth;
+      const sliceHeightPx = availableBodyHeightMm * pxPerMm;
 
-      while (heightLeft >= 0) {
-        position = position - pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      let sourceYPx = 0;
+      let remainingBodyPx = bodyCanvas.height;
+      let pageIndex = 0;
+
+      while (remainingBodyPx > 0) {
+        if (pageIndex > 0) {
+          pdf.addPage();
+        }
+
+        // Dibujar cabecera en la parte superior de cada página
+        pdf.addImage(headerImgData, "PNG", 0, 0, pdfWidth, headerHeightMm);
+
+        // Dibujar pie de página en la parte inferior de cada página
+        pdf.addImage(footerImgData, "PNG", 0, pdfPageHeight - footerHeightMm, pdfWidth, footerHeightMm);
+
+        const currentSlicePx = Math.min(sliceHeightPx, remainingBodyPx);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = bodyCanvas.width;
+        pageCanvas.height = currentSlicePx;
+
+        const ctx = pageCanvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, pageCanvas.width, currentSlicePx);
+          ctx.drawImage(
+            bodyCanvas,
+            0,
+            sourceYPx,
+            bodyCanvas.width,
+            currentSlicePx,
+            0,
+            0,
+            bodyCanvas.width,
+            currentSlicePx
+          );
+
+          const sliceImgData = pageCanvas.toDataURL("image/png");
+          const sliceHeightMm = (currentSlicePx * pdfWidth) / bodyCanvas.width;
+
+          pdf.addImage(sliceImgData, "PNG", 0, headerHeightMm, pdfWidth, sliceHeightMm);
+        }
+
+        sourceYPx += currentSlicePx;
+        remainingBodyPx -= currentSlicePx;
+        pageIndex++;
       }
 
-      pdf.save(`Analisis_Financiero_${username || 'Usuario'}.pdf`);
+      pdf.save(`Analisis_Financiero_${username || 'MarcoArias'}.pdf`);
     } catch (error) {
       console.error("Error al generar PDF:", error);
     } finally {
@@ -915,24 +976,27 @@ export default function Home() {
       {/* HIDDEN PDF TEMPLATE PARA REPORTE EMPRESARIAL */}
       {resultado && (
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
-          <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative flex flex-col" style={{ width: '794px', minHeight: '1123px' }}>
-            <div className="flex-1">
-              {/* Header */}
-              <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
+          <div id="pdf-report-template" style={{ width: '794px' }} className="bg-[#ffffff] text-[#0f172a] font-sans">
+            {/* Header (Imagen 1) */}
+            <div id="pdf-header" className="w-full bg-white p-8 pb-4 box-border">
+              <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-3">
                 <div>
-                  <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
-                  <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
+                  <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
+                  <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
                 </div>
-                <div className="text-right text-xs text-[#64748b] font-medium">
-                  <p>Generado el: {new Date().toLocaleDateString()}</p>
-                  <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
-                  <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
+                <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
+                  <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
+                  <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
+                  <p>ID Transacción: #{idTransaccion}</p>
                 </div>
               </div>
+            </div>
 
+            {/* Body */}
+            <div id="pdf-body" className="w-full bg-white px-8 py-4 box-border space-y-6">
               {/* Resumen Ejecutivo */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
-              <div className="grid grid-cols-3 gap-4 mb-8">
+              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
                   <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
                   <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
@@ -948,8 +1012,8 @@ export default function Home() {
               </div>
 
               {/* Diagnostico */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
-              <div className="grid grid-cols-4 gap-4 mb-8">
+              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
+              <div className="grid grid-cols-4 gap-4 mb-6">
                 <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
                   <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
                   <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
@@ -968,8 +1032,8 @@ export default function Home() {
               </div>
 
               {/* Desglose de Gastos */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
-              <div className="mb-8 overflow-hidden rounded-lg border border-[#e2e8f0]">
+              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
+              <div className="mb-6 overflow-hidden rounded-lg border border-[#e2e8f0]">
                 <table className="w-full text-left text-sm text-[#475569]">
                   <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
                     <tr>
@@ -993,8 +1057,8 @@ export default function Home() {
               </div>
 
               {/* Recomendaciones de IA */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
-              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
+              <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
+              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-4">
                 <ul className="space-y-3">
                   {resultado.recomendaciones.map((rec, index) => (
                     <li key={index} className="flex items-start gap-2">
@@ -1008,13 +1072,15 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="w-full pt-8 mt-auto">
-              <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
+            {/* Footer (Imagen 2) */}
+            <div id="pdf-footer" className="w-full bg-white relative pt-4 pb-8 px-8 box-border">
+              <div className="border-t border-[#e2e8f0] pt-3 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
                 <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1"><Sparkles size={12} /> G9 LATAM Team 38</p>
+                <p className="flex items-center gap-1.5 text-[#64748b]">
+                  <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
+                </p>
               </div>
-              <div className="h-4 w-[calc(100%+6rem)] bg-[#1e3a8a] absolute bottom-0 -ml-12"></div>
+              <div className="h-4 w-full bg-[#1e3a8a] absolute bottom-0 left-0"></div>
             </div>
           </div>
         </div>
