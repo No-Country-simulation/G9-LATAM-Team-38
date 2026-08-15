@@ -749,10 +749,10 @@ export default function Home() {
                 </span>
               </div>
             ) : (
-              <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-y-auto transition-colors duration-300`}>
+              <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-hidden transition-colors duration-300`}>
 
-                {/* Diagnóstico superior */}
-                <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-2">
+                {/* Diagnóstico superior (ESTÁTICO) */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-1">
                   {/* Círculos */}
                   <div className="flex items-center justify-center sm:justify-start gap-3 flex-shrink-0">
                     <div
@@ -803,8 +803,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* BARRA DE PROGRESO / RESUMEN DE GASTOS */}
-                <div className="space-y-1.5 flex-shrink-0">
+                {/* BARRA DE PROGRESO / RESUMEN DE GASTOS (ESTÁTICO) */}
+                <div className="space-y-1.5 flex-shrink-0 border-t border-[var(--brand-border)] pt-2">
                   <div className="flex justify-between items-center text-xs font-bold">
                     <span className="text-[var(--brand-muted)]">Resumen de gastos</span>
                     <span>${resultado.totalGastos}</span>
@@ -849,8 +849,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Recomendaciones de IA */}
-                <div className="space-y-1 flex-shrink-0 mt-2 border-t border-[var(--brand-border)] pt-2">
+                {/* Recomendaciones de IA (ÚNICA SECCIÓN CON SCROLL) */}
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1 border-t border-[var(--brand-border)] pt-2 space-y-1">
                   <span className={`text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted)]`}>
                     Recomendaciones de IA:
                   </span>
@@ -869,7 +869,8 @@ export default function Home() {
                   </ul>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-[var(--brand-border)] flex justify-end">
+                {/* BOTÓN DESCARGAR PDF (ESTÁTICO EN EL PIE) */}
+                <div className="pt-2 border-t border-[var(--brand-border)] flex justify-end flex-shrink-0">
                   <button
                     onClick={generarPDF}
                     disabled={generandoPDF}
