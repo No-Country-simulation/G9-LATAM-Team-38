@@ -65,6 +65,8 @@ public class AnalisisFinancieroController {
         response.put("probabilidad", 0.88);
         response.put("resumen_gastos", resumenGastos);
         response.put("recomendaciones", recomendaciones);
+        response.put("nivel_endeudamiento", request.nivelEndeudamiento());
+        response.put("frecuencia_ahorro", request.frecuenciaAhorro());
 
         // Guardar el historial si el usuario está autenticado
         guardarHistorialSiAutenticado(request, perfilFinanciero, puntaje, recomendaciones);

@@ -361,8 +361,8 @@ export default function Home() {
       // Mapeamos los datos para la UI
       // Nota: asumiendo que el backend ahora nos podría devolver el endeudamiento y ahorro que usó
       // Si el backend no los devuelve en la respuesta actual, calculamos para la gráfica visual de manera ilustrativa
-      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? Math.round((totalGastos / ingreso) * 100);
-      const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? "Media";
+      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? (modoActual === 'auto' ? parseFloat(endeudamientoAuto) : Math.round((totalGastos / ingreso) * 100));
+      const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? (modoActual === 'auto' ? frecuenciaAhorroAuto : "Media");
 
       let ahorroNum = 50;
       const ahorroLower = freqTextResult.toLowerCase();
