@@ -138,9 +138,20 @@ public class AnalisisFinancieroService {
 
     public String realizarPrediccionInterna(Object payload) {
         try {
+            Object pythonPayload = payload;
+            if (payload instanceof AnalisisRequest req) {
+                int endClamped = Math.min(100, Math.max(0, req.nivelEndeudamiento() != null ? req.nivelEndeudamiento() : 0));
+                pythonPayload = new AnalisisRequest(
+                        req.ingresoMensual(),
+                        endClamped,
+                        req.frecuenciaAhorro(),
+                        req.transacciones()
+                );
+            }
+
             String rawJson = restClient.post()
                     .uri("/prediccion-interna")
-                    .body(payload)
+                    .body(pythonPayload)
                     .retrieve()
                     .body(String.class);
 
@@ -153,8 +164,12 @@ public class AnalisisFinancieroService {
             }
             return rawJson;
         } catch (Exception e) {
-            logger.error("Fallo al comunicarse con FastAPI en /prediccion-interna: " + e.getMessage());
-            throw new RuntimeException("Error de comunicación con el servicio de IA (FastAPI): " + e.getMessage(), e);
+            logger.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
+            if (payload instanceof AnalisisRequest req) {
+                int puntaje = calcularPuntaje(req);
+                return (puntaje >= 80) ? "Excelente" : (puntaje >= 50) ? "Estable" : (puntaje >= 30) ? "En Riesgo" : "Crítico";
+            }
+            return "En Riesgo";
         }
     }
 
@@ -175,9 +190,30 @@ public class AnalisisFinancieroService {
             }
             return "Otros";
         } catch (Exception e) {
-            logger.error("Fallo al clasificar transacción con FastAPI: " + e.getMessage());
-            throw new RuntimeException("Error al clasificar transacción con el servicio de IA (FastAPI): " + e.getMessage(), e);
+            logger.warn("No se pudo clasificar la transaccion con FastAPI, usando fallback: " + e.getMessage());
+            return simularClasificacion(transaccion != null ? transaccion.descripcion() : null);
         }
+    }
+
+    private String simularClasificacion(String descripcion) {
+        if (descripcion == null) return "Otros";
+        String descLower = descripcion.toLowerCase();
+        if (descLower.contains("super") || descLower.contains("comida") || descLower.contains("carne") || descLower.contains("despensa")) {
+            return "Alimentacion";
+        } else if (descLower.contains("cine") || descLower.contains("juego") || descLower.contains("steam")) {
+            return "Ocio";
+        } else if (descLower.contains("uber") || descLower.contains("gasolina") || descLower.contains("auto")) {
+            return "Transporte";
+        } else if (descLower.contains("alquiler") || descLower.contains("renta") || descLower.contains("casa")) {
+            return "Vivienda";
+        } else if (descLower.contains("luz") || descLower.contains("internet") || descLower.contains("servicio")) {
+            return "Servicios";
+        } else if (descLower.contains("medica") || descLower.contains("salud") || descLower.contains("farmacia")) {
+            return "Salud";
+        } else if (descLower.contains("libro") || descLower.contains("escuela") || descLower.contains("universidad")) {
+            return "Educación";
+        }
+        return "Otros";
     }
 
 

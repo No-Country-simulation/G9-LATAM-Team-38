@@ -453,7 +453,11 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Error de red al comunicarse con el servidor");
+        const errorData = await response.json().catch(() => null);
+        const msg = errorData?.error || errorData?.message || `Error en el servidor (${response.status})`;
+        setMensajeAdvertencia(msg);
+        setCargando(false);
+        return;
       }
 
       const data = await response.json();
