@@ -77,12 +77,50 @@ export default function Home() {
     if (role === "ADMIN") {
       setIsAdmin(true);
     }
+
+    // Restaurar el estado previo de Data Storage / LocalStorage
+    try {
+      const savedState = localStorage.getItem("finance_active_state");
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        if (parsed.ingresoMensual !== undefined) setIngresoMensual(parsed.ingresoMensual);
+        if (parsed.transacciones && parsed.transacciones.length > 0) setTransacciones(parsed.transacciones);
+        if (parsed.resultado) setResultado(parsed.resultado);
+        if (parsed.modoIngresoDatos) setModoIngresoDatos(parsed.modoIngresoDatos);
+        if (parsed.endeudamientoManual) setEndeudamientoManual(parsed.endeudamientoManual);
+        if (parsed.frecuenciaAhorroManual) setFrecuenciaAhorroManual(parsed.frecuenciaAhorroManual);
+      }
+    } catch (e) {
+      console.warn("Error recuperando estado de Data Storage:", e);
+    }
   }, []);
+
+  // Guardar automáticamente cualquier cambio en las entradas o resultado en Data Storage
+  useEffect(() => {
+    if (ingresoMensual || (transacciones && transacciones.length > 0) || resultado) {
+      try {
+        localStorage.setItem(
+          "finance_active_state",
+          JSON.stringify({
+            ingresoMensual,
+            transacciones,
+            resultado,
+            modoIngresoDatos,
+            endeudamientoManual,
+            frecuenciaAhorroManual
+          })
+        );
+      } catch (e) {
+        console.warn("Error guardando estado en Data Storage:", e);
+      }
+    }
+  }, [ingresoMensual, transacciones, resultado, modoIngresoDatos, endeudamientoManual, frecuenciaAhorroManual]);
 
   const handleLogout = () => {
     localStorage.removeItem("finance_token");
     localStorage.removeItem("finance_username");
     localStorage.removeItem("finance_role");
+    localStorage.removeItem("finance_active_state");
     setUsername(null);
     window.location.href = "/login";
   };
