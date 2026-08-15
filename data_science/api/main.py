@@ -27,12 +27,10 @@ logger = logging.getLogger("financeai.data_science")
 MODELS_DIR = Path(__file__).parent / "models"
 CLASIFICADOR_GASTOS_PATH = MODELS_DIR / "clasificador_gastos.pkl"
 PERFIL_FINANCIERO_PATH = MODELS_DIR / "perfil_financiero.pkl"
-CODIFICADOR_PERFIL_PATH = MODELS_DIR / "codificador_perfil.pkl"
 MODEL_CHECKSUMS_PATH = MODELS_DIR / "SHA256SUMS"
 MODEL_FILES = {
     "clasificador_gastos.pkl": CLASIFICADOR_GASTOS_PATH,
     "perfil_financiero.pkl": PERFIL_FINANCIERO_PATH,
-    "codificador_perfil.pkl": CODIFICADOR_PERFIL_PATH,
 }
 
 # Diccionario en memoria donde viven los modelos ya cargados
@@ -106,7 +104,6 @@ async def lifespan(app: FastAPI):
         logger.info("Integridad de los modelos verificada correctamente")
         modelos["clasificador_gastos"] = cargar_modelo(CLASIFICADOR_GASTOS_PATH)
         modelos["perfil_financiero"] = cargar_modelo(PERFIL_FINANCIERO_PATH)
-        modelos["codificador_perfil"] = cargar_modelo(CODIFICADOR_PERFIL_PATH)
         logger.info("Modelos cargados correctamente: %s", list(modelos.keys()))
     except FileNotFoundError as e:
         logger.error("No se encontro el archivo de modelo: %s", e.filename)
@@ -125,6 +122,12 @@ async def lifespan(app: FastAPI):
 # --------------------------------------------------------------------------
 # Schemas de entrada (Pydantic v2) — JSON en camelCase, atributos en snake_case
 # --------------------------------------------------------------------------
+
+class NivelEndeudamiento(str, Enum):
+    BAJO = "bajo"
+    MEDIO = "medio"
+    ALTO = "alto"
+
 
 class FrecuenciaAhorro(str, Enum):
     ALTA = "Alta"
@@ -170,12 +173,7 @@ class TransaccionesRequest(BaseSchema):
 
     # Campos opcionales para el Modelo 2 (perfil financiero)
     ingreso_mensual: Optional[float] = Field(default=None, ge=0)
-    nivel_endeudamiento: Optional[float] = Field(
-        default=None,
-        ge=0,
-        le=100,
-        description="Nivel de endeudamiento como porcentaje (0-100), entrada cruda del Modelo 2",
-    )
+    nivel_endeudamiento: Optional[NivelEndeudamiento] = None
     frecuencia_ahorro: Optional[str] = Field(
         default=None,
         description="Frecuencia de ahorro del usuario",
@@ -192,7 +190,7 @@ class TransaccionesRequest(BaseSchema):
                     {"idTransaccion": "TX-00124", "descripcion": "Uber Eats cena", "monto": 245.50, "fecha": "2026-07-16"},
                 ],
                 "ingresoMensual": 25000.00,
-                "nivelEndeudamiento": 35,
+                "nivelEndeudamiento": "medio",
                 "frecuenciaAhorro": "Media",
             }
         },
@@ -210,7 +208,7 @@ class TransaccionClasificada(BaseSchema):
 
 class FeaturesPerfil(BaseSchema):
     ingreso_mensual: Optional[float] = None
-    nivel_endeudamiento: Optional[float] = None
+    nivel_endeudamiento: Optional[str] = None
     frecuencia_ahorro: Optional[str] = None
     total_gastos: float
     promedio_gasto: float
@@ -297,14 +295,13 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
     num_tx = len(payload.transacciones)
     promedio_gasto = total_gastos / num_tx if num_tx else 0.0
 
-    ingreso = payload.ingreso_mensual if payload.ingreso_mensual is not None else 0.0
-    nivel_endeudamiento = payload.nivel_endeudamiento if payload.nivel_endeudamiento is not None else 0.0
+    nivel_val = -1
+    if payload.nivel_endeudamiento is not None:
+        nivel_val = {"bajo": 0, "medio": 1, "alto": 2}[payload.nivel_endeudamiento.value]
 
-    # Modelo 2 fue entrenado unicamente con ingreso_mensual y nivel_endeudamiento
-    # (ver notebooks/Notebook_Entrenamiento.ipynb, seccion "Modelo 2"); total_gastos,
-    # promedio_gasto y numero_transacciones se reportan en la respuesta pero no
-    # forman parte de las features del modelo.
-    features = [[ingreso, nivel_endeudamiento]]
+    ingreso = payload.ingreso_mensual if payload.ingreso_mensual is not None else 0.0
+
+    features = [[ingreso, nivel_val, total_gastos, promedio_gasto, num_tx]]
     try:
         prediccion = modelo_perfil.predict(features)[0]
     except Exception as e:
@@ -314,14 +311,11 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
             detail=f"Error al calcular el perfil financiero: {e}",
         ) from e
 
-    codificador_perfil = modelos["codificador_perfil"]
-    etiqueta_perfil = codificador_perfil.inverse_transform([prediccion])[0]
-
     return PerfilResponse(
-        valor=str(etiqueta_perfil),
+        valor=str(prediccion),
         features_usadas=FeaturesPerfil(
             ingreso_mensual=payload.ingreso_mensual,
-            nivel_endeudamiento=payload.nivel_endeudamiento,
+            nivel_endeudamiento=payload.nivel_endeudamiento.value if payload.nivel_endeudamiento else None,
             frecuencia_ahorro=payload.frecuencia_ahorro if payload.frecuencia_ahorro else None,
             total_gastos=total_gastos,
             promedio_gasto=promedio_gasto,

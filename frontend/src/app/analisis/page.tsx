@@ -77,12 +77,50 @@ export default function Home() {
     if (role === "ADMIN") {
       setIsAdmin(true);
     }
+
+    // Restaurar el estado previo de Data Storage / LocalStorage
+    try {
+      const savedState = localStorage.getItem("finance_active_state");
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        if (parsed.ingresoMensual !== undefined) setIngresoMensual(parsed.ingresoMensual);
+        if (parsed.transacciones && parsed.transacciones.length > 0) setTransacciones(parsed.transacciones);
+        if (parsed.resultado) setResultado(parsed.resultado);
+        if (parsed.modoIngresoDatos) setModoIngresoDatos(parsed.modoIngresoDatos);
+        if (parsed.endeudamientoManual) setEndeudamientoManual(parsed.endeudamientoManual);
+        if (parsed.frecuenciaAhorroManual) setFrecuenciaAhorroManual(parsed.frecuenciaAhorroManual);
+      }
+    } catch (e) {
+      console.warn("Error recuperando estado de Data Storage:", e);
+    }
   }, []);
+
+  // Guardar automáticamente cualquier cambio en las entradas o resultado en Data Storage
+  useEffect(() => {
+    if (ingresoMensual || (transacciones && transacciones.length > 0) || resultado) {
+      try {
+        localStorage.setItem(
+          "finance_active_state",
+          JSON.stringify({
+            ingresoMensual,
+            transacciones,
+            resultado,
+            modoIngresoDatos,
+            endeudamientoManual,
+            frecuenciaAhorroManual
+          })
+        );
+      } catch (e) {
+        console.warn("Error guardando estado en Data Storage:", e);
+      }
+    }
+  }, [ingresoMensual, transacciones, resultado, modoIngresoDatos, endeudamientoManual, frecuenciaAhorroManual]);
 
   const handleLogout = () => {
     localStorage.removeItem("finance_token");
     localStorage.removeItem("finance_username");
     localStorage.removeItem("finance_role");
+    localStorage.removeItem("finance_active_state");
     setUsername(null);
     window.location.href = "/login";
   };
@@ -219,36 +257,37 @@ export default function Home() {
     }
   };
 
+  const [idTransaccion] = useState<string>("256406");
+
   const generarPDF = async () => {
-    const elemento = document.getElementById("pdf-report-template");
-    if (!elemento) return;
+    const pageEls = document.querySelectorAll<HTMLElement>(".pdf-page");
+    if (!pageEls || pageEls.length === 0) return;
 
     setGenerandoPDF(true);
     try {
-      const canvas = await html2canvas(elemento, {
-        scale: 2,
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfPageHeight = pdf.internal.pageSize.getHeight();
 
-      let heightLeft = pdfHeight;
-      let position = 0;
+      for (let i = 0; i < pageEls.length; i++) {
+        const pageEl = pageEls[i];
+        const canvas = await html2canvas(pageEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false
+        });
 
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+        const imgData = canvas.toDataURL("image/png");
 
-      while (heightLeft >= 0) {
-        position = position - pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfPageHeight);
       }
 
-      pdf.save(`Analisis_Financiero_${username || 'Usuario'}.pdf`);
+      pdf.save(`Analisis_Financiero_${username || 'MarcoArias'}.pdf`);
     } catch (error) {
       console.error("Error al generar PDF:", error);
     } finally {
@@ -264,12 +303,7 @@ export default function Home() {
     const ingreso = parseFloat(ingresoMensual) || 0;
     const modoActual = typeof modoForzado === 'string' ? modoForzado : modoIngresoDatos;
     
-    // Si aún no ha decidido el modo, le preguntamos antes de ejecutar
-    if (modoActual === null) {
-      setMostrarModalModo(true);
-      setCargando(false);
-      return;
-    }
+
 
     // VALIDACIÓN DE GASTOS
     const hayGastoInvalido = transacciones.some(
@@ -352,7 +386,11 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Error de red al comunicarse con el servidor");
+        const errorData = await response.json().catch(() => null);
+        const msg = errorData?.error || errorData?.message || `Error en el servidor (${response.status})`;
+        setMensajeAdvertencia(msg);
+        setCargando(false);
+        return;
       }
 
       const data = await response.json();
@@ -366,23 +404,36 @@ export default function Home() {
       // Mapeamos los datos para la UI
       // Nota: asumiendo que el backend ahora nos podría devolver el endeudamiento y ahorro que usó
       // Si el backend no los devuelve en la respuesta actual, calculamos para la gráfica visual de manera ilustrativa
-      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? Math.round((totalGastos / ingreso) * 100);
-      const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? "Media";
+      const endResult = data.nivel_endeudamiento ?? nivelEndeudamiento ?? (modoActual === 'auto' ? parseFloat(endeudamientoAuto) : Math.round((totalGastos / ingreso) * 100));
+      const freqTextResult = data.frecuencia_ahorro ?? frecuenciaAhorro ?? (modoActual === 'auto' ? frecuenciaAhorroAuto : "Media");
 
       let ahorroNum = 50;
       const ahorroLower = freqTextResult.toLowerCase();
       if (ahorroLower.includes("alta") || ahorroLower.includes("alto")) ahorroNum = 80;
       if (ahorroLower.includes("baja") || ahorroLower.includes("bajo") || ahorroLower.includes("nula")) ahorroNum = 20;
 
-      const desglose = transaccionesValidas.map(t => {
-        const montoNum = parseFloat(t.monto) || 0;
-        const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
-        return {
-          descripcion: t.descripcion || "Sin nombre",
-          monto: montoNum,
-          porcentaje
-        };
-      });
+      let desglose = [];
+      if (data.resumen_gastos && typeof data.resumen_gastos === "object" && Object.keys(data.resumen_gastos).length > 0) {
+        desglose = Object.entries(data.resumen_gastos).map(([categoria, monto]) => {
+          const montoNum = typeof monto === "number" ? monto : parseFloat(monto as any) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: categoria,
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      } else {
+        desglose = transaccionesValidas.map(t => {
+          const montoNum = parseFloat(t.monto) || 0;
+          const porcentaje = totalGastos > 0 ? (montoNum / totalGastos) * 100 : 0;
+          return {
+            descripcion: t.descripcion || "Sin nombre",
+            monto: montoNum,
+            porcentaje
+          };
+        });
+      }
 
       setResultado({
         confianza: Math.round((data.probabilidad || 0.88) * 100),
@@ -698,10 +749,10 @@ export default function Home() {
                 </span>
               </div>
             ) : (
-              <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-y-auto transition-colors duration-300`}>
+              <div className={`bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-3 flex flex-col justify-between gap-2.5 flex-1 min-h-0 overflow-hidden transition-colors duration-300`}>
 
-                {/* Diagnóstico superior */}
-                <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-2">
+                {/* Diagnóstico superior (ESTÁTICO) */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 py-1">
                   {/* Círculos */}
                   <div className="flex items-center justify-center sm:justify-start gap-3 flex-shrink-0">
                     <div
@@ -752,8 +803,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* BARRA DE PROGRESO / RESUMEN DE GASTOS */}
-                <div className="space-y-1.5 flex-shrink-0">
+                {/* BARRA DE PROGRESO / RESUMEN DE GASTOS (ESTÁTICO) */}
+                <div className="space-y-1.5 flex-shrink-0 border-t border-[var(--brand-border)] pt-2">
                   <div className="flex justify-between items-center text-xs font-bold">
                     <span className="text-[var(--brand-muted)]">Resumen de gastos</span>
                     <span>${resultado.totalGastos}</span>
@@ -798,8 +849,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Recomendaciones de IA */}
-                <div className="space-y-1 flex-shrink-0 mt-2 border-t border-[var(--brand-border)] pt-2">
+                {/* Recomendaciones de IA (ÚNICA SECCIÓN CON SCROLL) */}
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1 border-t border-[var(--brand-border)] pt-2 space-y-1">
                   <span className={`text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted)]`}>
                     Recomendaciones de IA:
                   </span>
@@ -818,7 +869,8 @@ export default function Home() {
                   </ul>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-[var(--brand-border)] flex justify-end">
+                {/* BOTÓN DESCARGAR PDF (ESTÁTICO EN EL PIE) */}
+                <div className="pt-2 border-t border-[var(--brand-border)] flex justify-end flex-shrink-0">
                   <button
                     onClick={generarPDF}
                     disabled={generandoPDF}
@@ -904,109 +956,150 @@ export default function Home() {
         </div>
       )}
 
-      {/* HIDDEN PDF TEMPLATE PARA REPORTE EMPRESARIAL */}
+      {/* HIDDEN PDF TEMPLATE MULTI-PÁGINA */}
       {resultado && (
-        <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none">
-          <div id="pdf-report-template" className="bg-[#ffffff] text-[#0f172a] font-sans p-12 box-border relative flex flex-col" style={{ width: '794px', minHeight: '1123px' }}>
-            <div className="flex-1">
-              {/* Header */}
-              <div className="flex justify-between items-end border-b-4 border-[#1e3a8a] pb-4 mb-8">
-                <div>
-                  <h1 className="text-4xl font-extrabold text-[#172554] tracking-tight">FINANCE AI</h1>
-                  <p className="text-sm font-semibold text-[#64748b] uppercase tracking-widest mt-1">Reporte Analítico Empresarial</p>
-                </div>
-                <div className="text-right text-xs text-[#64748b] font-medium">
-                  <p>Generado el: {new Date().toLocaleDateString()}</p>
-                  <p>Usuario: <span className="font-bold text-[#334155]">{username || 'N/A'}</span></p>
-                  <p>ID Transacción: #{Date.now().toString().slice(-6)}</p>
-                </div>
-              </div>
-
-              {/* Resumen Ejecutivo */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Resumen Ejecutivo</h2>
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
-                  <p className="text-2xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
-                </div>
-                <div className="bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
-                  <p className="text-2xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
-                </div>
-                <div className="bg-[#eff6ff] p-4 rounded-lg border border-[#bfdbfe] shadow-sm">
-                  <p className="text-xs text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
-                  <p className="text-2xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
+        <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none space-y-10">
+          {/* PÁGINA 1: Resumen, Diagnóstico y Tabla de Movimientos */}
+          <div className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans flex flex-col justify-between p-8 box-border relative overflow-hidden" style={{ width: '794px', height: '1123px', minHeight: '1123px' }}>
+            <div>
+              {/* Header (Imagen 1) */}
+              <div className="w-full bg-white pb-3 border-b-4 border-[#1e3a8a] mb-5">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
+                  </div>
+                  <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
+                    <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
+                    <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
+                    <p>ID Transacción: #{idTransaccion}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Diagnostico */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Diagnóstico Financiero</h2>
-              <div className="grid grid-cols-4 gap-4 mb-8">
-                <div className="col-span-2 bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
-                  <p className="text-lg font-bold text-[#1e293b]">{resultado.estado}</p>
-                  <p className="text-sm text-[#475569] mt-1">{resultado.mensaje}</p>
+              {/* Body Página 1 */}
+              <div className="w-full bg-white space-y-5">
+                {/* Resumen Ejecutivo */}
+                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Resumen Ejecutivo</h2>
+                <div className="grid grid-cols-3 gap-3.5 mb-4">
+                  <div className="bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] shadow-sm">
+                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
+                    <p className="text-xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
+                  </div>
+                  <div className="bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] shadow-sm">
+                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
+                    <p className="text-xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-[#eff6ff] p-3.5 rounded-lg border border-[#bfdbfe] shadow-sm">
+                    <p className="text-[11px] text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
+                    <p className="text-xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
+                  </div>
                 </div>
 
-                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Endeudamiento</p>
-                  <span className="text-3xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
+                {/* Diagnóstico */}
+                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Diagnóstico Financiero</h2>
+                <div className="grid grid-cols-4 gap-3.5 mb-4">
+                  <div className="col-span-2 bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
+                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
+                    <p className="text-base font-bold text-[#1e293b]">{resultado.estado}</p>
+                    <p className="text-xs text-[#475569] mt-0.5">{resultado.mensaje}</p>
+                  </div>
+
+                  <div className="text-center bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Endeudamiento</p>
+                    <span className="text-2xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
+                  </div>
+
+                  <div className="text-center bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Capacidad Ahorro</p>
+                    <span className="text-xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
+                  </div>
                 </div>
 
-                <div className="text-center bg-[#f8fafc] p-4 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                  <p className="text-xs text-[#64748b] font-bold uppercase mb-2">Capacidad Ahorro</p>
-                  <span className="text-2xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
-                </div>
-              </div>
-
-              {/* Desglose de Gastos */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Desglose de Movimientos</h2>
-              <div className="mb-8 overflow-hidden rounded-lg border border-[#e2e8f0]">
-                <table className="w-full text-left text-sm text-[#475569]">
-                  <thead className="bg-[#f1f5f9] text-xs uppercase font-bold text-[#334155]">
-                    <tr>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0]">Concepto</th>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Monto</th>
-                      <th className="px-4 py-3 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#f1f5f9]">
-                    {resultado.desglose.map((item, idx) => (
-                      <tr key={idx} className="bg-[#ffffff]">
-                        <td className="px-4 py-2.5 font-medium text-[#1e293b]">{item.descripcion}</td>
-                        <td className="px-4 py-2.5 text-right font-bold">${item.monto.toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right">
-                          <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-xs font-bold">{item.porcentaje.toFixed(1)}%</span>
-                        </td>
+                {/* Desglose de Gastos */}
+                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Desglose de Movimientos</h2>
+                <div className="overflow-hidden rounded-lg border border-[#e2e8f0]">
+                  <table className="w-full text-left text-xs text-[#475569]">
+                    <thead className="bg-[#f1f5f9] text-[11px] uppercase font-bold text-[#334155]">
+                      <tr>
+                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0]">Concepto</th>
+                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0] text-right">Monto</th>
+                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Recomendaciones de IA */}
-              <h2 className="text-xl font-bold text-[#1e3a8a] mb-4 border-l-4 border-[#2563eb] pl-3">Plan de Acción / Sugerencias IA</h2>
-              <div className="bg-[#eef2ff] border border-[#e0e7ff] rounded-lg p-5 mb-8">
-                <ul className="space-y-3">
-                  {resultado.recomendaciones.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-[#4338ca] font-black text-sm flex-shrink-0 mt-[1px]">
-                        {index + 1}.
-                      </span>
-                      <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
-                    </li>
-                  ))}
-                </ul>
+                    </thead>
+                    <tbody className="divide-y divide-[#f1f5f9]">
+                      {resultado.desglose.map((item, idx) => (
+                        <tr key={idx} className="bg-[#ffffff]">
+                          <td className="px-3.5 py-2 font-medium text-[#1e293b]">{item.descripcion}</td>
+                          <td className="px-3.5 py-2 text-right font-bold">${item.monto.toLocaleString()}</td>
+                          <td className="px-3.5 py-2 text-right">
+                            <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-[10px] font-bold">{item.porcentaje.toFixed(1)}%</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="w-full pt-8 mt-auto">
-              <div className="border-t border-[#e2e8f0] pt-4 flex justify-between items-center text-xs text-[#94a3b8] font-medium">
+            {/* Footer Página 1 (Imagen 2) */}
+            <div className="w-full bg-white relative pt-3 pb-6 box-border">
+              <div className="border-t border-[#e2e8f0] pt-3 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
                 <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1"><Sparkles size={12} /> G9 LATAM Team 38</p>
+                <p className="flex items-center gap-1.5 text-[#64748b]">
+                  <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
+                </p>
               </div>
-              <div className="h-4 w-[calc(100%+6rem)] bg-[#1e3a8a] absolute bottom-0 -ml-12"></div>
+              <div className="h-4 w-[calc(100%+4rem)] bg-[#1e3a8a] absolute bottom-0 -ml-8"></div>
+            </div>
+          </div>
+
+          {/* PÁGINA 2: Plan de Acción / Sugerencias IA */}
+          <div className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans flex flex-col justify-between p-8 box-border relative overflow-hidden" style={{ width: '794px', height: '1123px', minHeight: '1123px' }}>
+            <div>
+              {/* Header (Imagen 1) */}
+              <div className="w-full bg-white pb-3 border-b-4 border-[#1e3a8a] mb-5">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
+                  </div>
+                  <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
+                    <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
+                    <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
+                    <p>ID Transacción: #{idTransaccion}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body Página 2 */}
+              <div className="w-full bg-white space-y-4">
+                <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">
+                  Plan de Acción / Sugerencias IA
+                </h2>
+                <div className="space-y-3">
+                  {resultado.recomendaciones.map((rec, index) => (
+                    <div key={index} className="bg-[#eef2ff] border border-[#e0e7ff] rounded-xl p-4 flex items-start gap-3 shadow-xs">
+                      <span className="bg-[#4338ca] text-white font-black text-xs px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">
+                        {index + 1}
+                      </span>
+                      <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Página 2 (Imagen 2) */}
+            <div className="w-full bg-white relative pt-3 pb-6 box-border">
+              <div className="border-t border-[#e2e8f0] pt-3 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
+                <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
+                <p className="flex items-center gap-1.5 text-[#64748b]">
+                  <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
+                </p>
+              </div>
+              <div className="h-4 w-[calc(100%+4rem)] bg-[#1e3a8a] absolute bottom-0 -ml-8"></div>
             </div>
           </div>
         </div>

@@ -58,7 +58,7 @@ def _fallback_app(reason: Optional[Exception] = None) -> FastAPI:
     return fallback
 
 
-if os.getenv("ENABLE_MODEL_API", "0").lower() in {"1", "true", "yes"}:
+if os.getenv("ENABLE_MODEL_API", "1").lower() in {"1", "true", "yes"}:
     try:
         _model_module = importlib.import_module("data_science.main")
         app = getattr(_model_module, "app")

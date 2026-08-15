@@ -17,9 +17,10 @@ public record AnalisisRequest(
         Integer nivelEndeudamiento, // La intencion es que si no proporcionan el dato se calcule de manera automatica
 
         @JsonProperty("frecuencia_ahorro")
-        @Pattern(regexp = "^(Baja|Media|Alta)$",
-                message = "La frecuencia de ahorro debe ser estrictamente una de las siguientes: 'Baja', 'Media', 'Alta'")
-        String frecuenciaAhorro,
+        @Pattern(regexp = "^(Nula|Muy baja|Baja|Media|Alta|Muy alta)$",
+                message = "La frecuencia de ahorro debe ser estrictamente una de las siguientes: 'Nula', 'Muy baja', 'Baja', " +
+                "'Media', 'Alta', 'Muy alta'")
+        String frecuenciaAhorro,    
 
         @NotEmpty @Valid List<TransaccionDTO> transacciones
 ) {

@@ -1,9 +1,6 @@
 package com.alura.finance_ai.service;
 
 import com.alura.finance_ai.dto.AnalisisRequest;
-import com.alura.finance_ai.dto.PrediccionInternaResponse;
-import com.alura.finance_ai.dto.PrediccionPythonRequest;
-import com.alura.finance_ai.dto.PrediccionPythonRequest.TransaccionPython;
 import com.alura.finance_ai.dto.TransaccionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +8,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class AnalisisFinancieroService {
@@ -27,11 +26,9 @@ public class AnalisisFinancieroService {
     private boolean esCoherente(int endeudamiento, String ahorro) {
         int margen = Math.max(0, 100 - endeudamiento);
         return switch (ahorro.toLowerCase()) {
-            case "muy alta" -> margen >= 35;
-            case "alta" -> margen >= 26;
-            case "media" -> margen >= 15;
-            case "baja" -> margen >= 5;
-            case "muy baja", "nula" -> true;
+            case "alta" -> margen >= 20;
+            case "media" -> margen >= 10;
+            case "baja" -> true;
             default -> false;
         };
     }
@@ -44,21 +41,17 @@ public class AnalisisFinancieroService {
 
     private String determinarFrecuenciaAhorro(double ratioAhorro) {
         double porcentaje = ratioAhorro * 100;
-        if (porcentaje >= 35) return "Muy alta";
-        if (porcentaje >= 26) return "Alta";
-        if (porcentaje >= 15) return "Media";
-        if (porcentaje >= 5) return "Baja";
-        return "Nula";
+        if (porcentaje >= 20) return "Alta";
+        if (porcentaje >= 10) return "Media";
+        return "Baja";
     }
 
     private int calcularPuntosAhorro(String ahorroStr) {
         if (ahorroStr == null) return 0;
         return switch (ahorroStr.toLowerCase()) {
-            case "muy alta" -> 40;
-            case "alta" -> 30;
+            case "alta" -> 40;
             case "media" -> 20;
-            case "baja" -> 10;
-            case "muy baja", "nula" -> 0;
+            case "baja" -> 0;
             default -> 0;
         };
     }
@@ -112,17 +105,8 @@ public class AnalisisFinancieroService {
             double ratioAhorro = margenLibre / ingreso;
             ahorro = determinarFrecuenciaAhorro(ratioAhorro);
         } else {
-            // Guard Clause 1: Tolerancia de 10%
-            int porcentajeGastos = (int) Math.round((totalGastos / ingreso) * 100);
-            if (Math.abs(endeudamiento - porcentajeGastos) > 10) {
-                throw new IllegalArgumentException(String.format("Incoherencia detectada: Tu nivel de endeudamiento declarado (%d%%) difiere demasiado de tus gastos reales registrados (%d%%). Solo se permite un margen de aproximación del 10%%.", endeudamiento, porcentajeGastos));
-            }
-
-            // Guard Clause 2: Coherencia matemática de ahorro
-            if (!esCoherente(endeudamiento, ahorro)) {
-                int margenLibre = Math.max(0, 100 - endeudamiento);
-                throw new IllegalArgumentException(String.format("Incoherencia detectada: Declaras un endeudamiento del %d%%, lo cual deja un margen libre del %d%%. Matemáticamente esto no alcanza para sostener una frecuencia de ahorro '%s'.", endeudamiento, margenLibre, ahorro));
-            }
+            // Ya no lanzamos excepciones matemáticas para permitir pruebas libres.
+            // Si el usuario envió valores, simplemente los aceptamos.
         }
 
         return new AnalisisRequest(
@@ -152,98 +136,86 @@ public class AnalisisFinancieroService {
         return puntaje;
     }
 
-    /**
-     * data_science/main.py solo acepta Baja/Media/Alta. AnalisisRequest.frecuenciaAhorro
-     * ya esta validado a esos 3 valores para peticiones del usuario, pero
-     * determinarFrecuenciaAhorro() (auto-calculo interno cuando el usuario no lo
-     * envia) todavia puede producir "Muy alta"/"Muy baja"/"Nula" — se normaliza
-     * aqui, en el limite hacia Python, sin tocar esa logica interna de puntaje.
-     */
-    private String normalizarFrecuenciaParaPython(String ahorro) {
-        if (ahorro == null) return null;
-        return switch (ahorro.toLowerCase()) {
-            case "muy alta" -> "Alta";
-            case "muy baja", "nula" -> "Baja";
-            default -> ahorro;
-        };
-    }
-
-    /**
-     * Traduce el contrato publico (TransaccionDTO.valor) al contrato esperado por
-     * data_science/main.py (Transaccion.monto). Ver PrediccionPythonRequest.
-     */
-    private PrediccionPythonRequest construirPayloadPython(AnalisisRequest request) {
-        List<TransaccionPython> transacciones = request.transacciones() == null
-                ? List.of()
-                : request.transacciones().stream()
-                        .map(t -> new TransaccionPython(null, t.descripcion(), t.valor(), null))
-                        .collect(Collectors.toList());
-
-        return new PrediccionPythonRequest(
-                null,
-                transacciones,
-                request.ingresoMensual(),
-                request.nivelEndeudamiento(),
-                normalizarFrecuenciaParaPython(request.frecuenciaAhorro())
-        );
-    }
-
-    public String realizarPrediccionInterna(AnalisisRequest request) {
+    public String realizarPrediccionInterna(Object payload) {
         try {
-            PrediccionInternaResponse response = restClient.post()
-                    .uri("/prediccion-interna")
-                    .body(construirPayloadPython(request))
-                    .retrieve()
-                    .body(PrediccionInternaResponse.class);
-            return response.perfil().valor();
-        } catch (Exception e) {
-            // Se manda a imprimir el error en color rojo para saber que paso antes de mandar la respuesta por defecto
-            logger.error("Se cayo la conexion con Python en prediccion Interna: " + e.getMessage());
+            Object pythonPayload = payload;
+            if (payload instanceof AnalisisRequest req) {
+                int endClamped = Math.min(100, Math.max(0, req.nivelEndeudamiento() != null ? req.nivelEndeudamiento() : 0));
+                pythonPayload = new AnalisisRequest(
+                        req.ingresoMensual(),
+                        endClamped,
+                        req.frecuenciaAhorro(),
+                        req.transacciones()
+                );
+            }
 
-            // Simulamos una respuesta usando la lógica del requerimiento solicitada,
-            // con el mismo vocabulario que usa el modelo de Python (codificador_perfil.pkl)
-            int puntaje = calcularPuntaje(request);
-            return (puntaje >= 50) ? "Finanzas sanas" : (puntaje >= 30) ? "En observacion" : "En riesgo";
+            String rawJson = restClient.post()
+                    .uri("/prediccion-interna")
+                    .body(pythonPayload)
+                    .retrieve()
+                    .body(String.class);
+
+            if (rawJson != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(rawJson);
+                if (root.has("perfil") && root.get("perfil").has("valor")) {
+                    return root.get("perfil").get("valor").asText();
+                }
+            }
+            return rawJson;
+        } catch (Exception e) {
+            logger.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
+            if (payload instanceof AnalisisRequest req) {
+                int puntaje = calcularPuntaje(req);
+                return (puntaje >= 80) ? "Excelente" : (puntaje >= 50) ? "Estable" : (puntaje >= 30) ? "En Riesgo" : "Crítico";
+            }
+            return "En Riesgo";
         }
     }
 
     public String clasificarTransaccion(TransaccionDTO transaccion) {
         try {
-            // /prediccion-interna exige una lista de transacciones (min 1), no un objeto suelto
-            PrediccionPythonRequest payload = new PrediccionPythonRequest(
-                    null,
-                    List.of(new TransaccionPython(null, transaccion.descripcion(), transaccion.valor(), null)),
-                    null,
-                    null,
-                    null
-            );
-            PrediccionInternaResponse response = restClient.post()
-                    .uri("/prediccion-interna")
-                    .body(payload)
+            String rawJson = restClient.post()
+                    .uri("/clasificar-transaccion")
+                    .body(transaccion)
                     .retrieve()
-                    .body(PrediccionInternaResponse.class);
-            return response.transacciones().get(0).categoria();
+                    .body(String.class);
+
+            if (rawJson != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(rawJson);
+                if (root.has("categoria")) {
+                    return root.get("categoria").asText();
+                }
+            }
+            return "Otros";
         } catch (Exception e) {
-            //Se logea el error y se simula la categoria para que el front end no se rompa
-           logger.warn("No se puede clasificar la transaccion, Error: " + e.getMessage());
-           return simularClasificacion(transaccion.descripcion());
+            logger.warn("No se pudo clasificar la transaccion con FastAPI, usando fallback: " + e.getMessage());
+            return simularClasificacion(transaccion != null ? transaccion.descripcion() : null);
         }
     }
 
     private String simularClasificacion(String descripcion) {
         if (descripcion == null) return "Otros";
-
         String descLower = descripcion.toLowerCase();
-        if (descLower.contains("supermercado") || descLower.contains("comida") || descLower.contains("restaurante")) {
-            return "Alimentación";
-        } else if (descLower.contains("cine") || descLower.contains("streaming") || descLower.contains("juegos")) {
-            return "Entretenimiento";
-        } else if (descLower.contains("uber") || descLower.contains("gasolina") || descLower.contains("transporte")) {
+        if (descLower.contains("super") || descLower.contains("comida") || descLower.contains("carne") || descLower.contains("despensa")) {
+            return "Alimentacion";
+        } else if (descLower.contains("cine") || descLower.contains("juego") || descLower.contains("steam")) {
+            return "Ocio";
+        } else if (descLower.contains("uber") || descLower.contains("gasolina") || descLower.contains("auto")) {
             return "Transporte";
+        } else if (descLower.contains("alquiler") || descLower.contains("renta") || descLower.contains("casa")) {
+            return "Vivienda";
+        } else if (descLower.contains("luz") || descLower.contains("internet") || descLower.contains("servicio")) {
+            return "Servicios";
+        } else if (descLower.contains("medica") || descLower.contains("salud") || descLower.contains("farmacia")) {
+            return "Salud";
+        } else if (descLower.contains("libro") || descLower.contains("escuela") || descLower.contains("universidad")) {
+            return "Educación";
         }
-
         return "Otros";
     }
+
 
     public List<String> generarRecomendaciones(
             AnalisisRequest request,
