@@ -73,6 +73,7 @@ const miembrosEquipo: Miembro[] = [
 
 export default function LoginPage() {
   const router = useRouter();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -132,10 +133,10 @@ export default function LoginPage() {
 
       {/* CONTENIDO CENTRAL */}
       <div className="flex-1 flex flex-col lg:flex-row-reverse justify-center items-center gap-12 lg:gap-20 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
-        
-        {/* Lado Derecho (Visualmente): Formulario de Login */}
+
+        {/* Lado Derecho: Formulario de Login */}
         <div className="w-full max-w-md flex flex-col items-center lg:items-start">
-          
+
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div className="group bg-[var(--brand-accent)] p-2 rounded-xl shadow-md flex items-center justify-center text-white dark:text-[#0B2545] transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
@@ -160,9 +161,8 @@ export default function LoginPage() {
 
           {/* Login Card */}
           <div className="w-full bg-[var(--brand-card)] rounded-2xl p-6 shadow-2xl border border-[var(--brand-border)]">
-            
+
             <div className="flex items-center gap-2 mb-6">
-              {/* ICONO NUEVO: Login / Crear cuenta */}
               {isLogin ? (
                 <LogIn
                   size={16}
@@ -182,6 +182,7 @@ export default function LoginPage() {
               </h3>
             </div>
 
+            {/* MENSAJE DE ERROR */}
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-[var(--brand-text)]">
                 <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5 transition-transform duration-200 hover:scale-110" />
@@ -190,10 +191,13 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* FORMULARIO */}
             <form
               onSubmit={handleAuth}
               className="bg-[var(--brand-bg)] border border-[var(--brand-border)] rounded-xl p-5 space-y-4"
             >
+
+              {/* USUARIO */}
               <div>
                 <label className="block text-xs font-semibold text-[var(--brand-muted)] mb-1.5">
                   Usuario
@@ -218,6 +222,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* CONTRASEÑA */}
               <div>
                 <label className="block text-xs font-semibold text-[var(--brand-muted)] mb-1.5">
                   Contraseña
@@ -242,6 +247,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* BOTÓN DE LOGIN */}
               <button
                 type="submit"
                 disabled={loading}
@@ -251,7 +257,6 @@ export default function LoginPage() {
                   <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    {/* ICONO NUEVO: Login / Crear cuenta */}
                     {isLogin ? (
                       <LogIn
                         size={17}
@@ -274,6 +279,7 @@ export default function LoginPage() {
               </button>
             </form>
 
+            {/* CAMBIAR ENTRE LOGIN Y REGISTRO */}
             <div className="mt-6 text-center">
               <p className="text-xs text-[var(--brand-muted)]">
                 {isLogin
@@ -294,6 +300,8 @@ export default function LoginPage() {
 
         {/* Lado Izquierdo: Créditos al Equipo */}
         <div className="w-full max-w-lg lg:max-w-xl">
+
+          {/* TITULO */}
           <div className="mb-6 text-center lg:text-left">
             <h2 className="text-2xl md:text-3xl font-bold flex items-center justify-center lg:justify-start gap-2 mb-2 text-[var(--brand-text)]">
               <Sparkles
@@ -315,15 +323,16 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Tarjetas de Equipo (Grid responsivo) */}
+          {/* TARJETAS DE EQUIPO */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {miembrosEquipo.map((miembro, idx) => (
               <div
                 key={idx}
                 className="bg-[var(--brand-card)] p-3 rounded-xl border border-[var(--brand-border)] flex flex-col justify-between shadow-lg hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] hover:border-[var(--brand-accent)] transition-all duration-300 group transform hover:-translate-y-1 hover:scale-[1.01]"
               >
+
+                {/* INFORMACIÓN DEL MIEMBRO */}
                 <div>
-                  {/* Nombre con title para hover */}
                   <span
                     className="font-bold text-xs md:text-sm truncate text-[var(--brand-text)] group-hover:text-[var(--brand-accent)] transition-colors block"
                     title={miembro.nombre}
@@ -331,48 +340,64 @@ export default function LoginPage() {
                     {miembro.nombre}
                   </span>
 
-                  {/* Aquí pintamos el ROL */}
                   <span className="text-[9px] md:text-[10px] text-[var(--brand-muted)] font-bold uppercase tracking-wider truncate block mt-0.5">
                     {miembro.rol}
                   </span>
                 </div>
 
+                {/* ICONOS */}
                 <div className="flex items-center gap-2.5 mt-3">
+
+                  {/* LINKEDIN */}
                   {miembro.linkedin && (
                     <a
                       href={miembro.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-md text-[var(--brand-accent)] hover:text-[var(--brand-text)] hover:bg-[var(--brand-accent)]/10 transition-all duration-200 hover:scale-110 active:scale-95"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-[var(--brand-accent)] hover:text-[var(--brand-text)] hover:bg-[var(--brand-accent)]/10 transition-all duration-200 hover:scale-110 active:scale-95"
                       title="LinkedIn"
                       aria-label={`LinkedIn de ${miembro.nombre}`}
                     >
                       <svg
-                        className="w-4 h-4 fill-current"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
+                        fill="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                       >
                         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                       </svg>
                     </a>
                   )}
 
+                  {/* GITHUB */}
                   {miembro.github && (
                     <a
                       href={miembro.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-md text-[var(--brand-accent)] hover:text-[var(--brand-text)] hover:bg-[var(--brand-accent)]/10 transition-all duration-200 hover:scale-110 active:scale-95"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-[var(--brand-accent)] hover:text-[var(--brand-text)] hover:bg-[var(--brand-accent)]/10 transition-all duration-200 hover:scale-110 active:scale-95"
                       title="GitHub"
                       aria-label={`GitHub de ${miembro.nombre}`}
                     >
                       <svg
-                        className="w-4 h-4 fill-current"
+                        width="20"
+                        height="20"
                         viewBox="0 0 24 24"
+                        fill="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                       >
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.931-2.807-5.624-.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.28-.01-1.04-.01-2.04-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.14 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22 0 1.61-.01 2.9-.01 3.29 0 .32.22.69.83.58A12.01 12.01 0 0 0 24 12C24 5.37 18.63 0 12 0Z"
+                        />
                       </svg>
                     </a>
                   )}
+
                 </div>
               </div>
             ))}
