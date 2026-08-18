@@ -47,7 +47,9 @@ El proyecto está fundamentado en una arquitectura de microservicios orientada a
 
 * **Integración Local Segura:** La API principal (Java) y el microservicio predictivo (Python) se comunican de forma interna y eficiente.
 * **Contenedorización:** Utilizamos **Docker** como solución de contenedorización para empaquetar los entornos, aislar las dependencias y asegurar la consistencia del despliegue entre el equipo.
-* **Cloud Hosting:** La infraestructura se aloja en una instancia gratuita Compute de **Oracle Cloud Infrastructure (OCI)**, aprovechando OCI Object Storage para el resguardo, versionado y carga segura de los modelos de IA entrenados (`.pkl`).
+* **Cloud Hosting:** La infraestructura se aloja en una instancia Compute de **Oracle Cloud Infrastructure (OCI)**, aprovechando OCI Object Storage para el resguardo del dataset y los modelos de IA entrenados (`.pkl`).
+
+📄 Detalle completo (diagrama y explicación de cómo interactúan Java, Python, OCI Compute y OCI Object Storage): **[arquitectura.md](./arquitectura.md)**
 
 ---
 
