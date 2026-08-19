@@ -174,6 +174,14 @@ public class AnalisisFinancieroService {
     }
 
     public String clasificarTransaccion(TransaccionDTO transaccion) {
+        if (transaccion == null || transaccion.descripcion() == null) {
+            return "Otros";
+        }
+        String desc = transaccion.descripcion().trim().toLowerCase();
+        if (desc.equals("otro") || desc.equals("otros") || desc.startsWith("otro") || desc.contains("varios") || desc.contains("miscelaneo") || desc.contains("extra") || desc.equals("sin categoria")) {
+            return "Otros";
+        }
+
         try {
             String rawJson = restClient.post()
                     .uri("/clasificar-transaccion")
@@ -191,7 +199,7 @@ public class AnalisisFinancieroService {
             return "Otros";
         } catch (Exception e) {
             logger.warn("No se pudo clasificar la transaccion con FastAPI, usando fallback: " + e.getMessage());
-            return simularClasificacion(transaccion != null ? transaccion.descripcion() : null);
+            return simularClasificacion(transaccion.descripcion());
         }
     }
 
