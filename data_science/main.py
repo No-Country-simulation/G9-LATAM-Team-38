@@ -12,6 +12,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator, ConfigDict, AliasChoices
 from pydantic.alias_generators import to_camel
 
+from logging_utils import PiiSafeFormatter, exception_type
+
 # --------------------------------------------------------------------------
 # Logging
 # --------------------------------------------------------------------------
@@ -19,6 +21,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
+for _handler in logging.getLogger().handlers:
+    _handler.setFormatter(PiiSafeFormatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
 logger = logging.getLogger("financeai.data_science")
 
 # --------------------------------------------------------------------------
@@ -112,8 +116,8 @@ async def lifespan(app: FastAPI):
         logger.error("No se encontro el archivo de modelo: %s", e.filename)
         raise RuntimeError(f"No se encontro el archivo de modelo: {e.filename}") from e
     except Exception as e:
-        logger.exception("Error al cargar los modelos")
-        raise RuntimeError(f"Error al cargar los modelos: {e}") from e
+        logger.error("Error al cargar los modelos (%s)", exception_type(e))
+        raise RuntimeError("Error al cargar los modelos") from e
 
     yield
 
@@ -264,10 +268,13 @@ def clasificar_transacciones(transacciones: List[Transaccion]) -> List[Transacci
     try:
         predicciones = modelo_gastos.predict(descripciones)
     except Exception as e:
-        logger.exception("Fallo al ejecutar predict() del clasificador de gastos")
+        logger.error(
+            "Fallo al ejecutar predict() del clasificador de gastos (%s)",
+            exception_type(e),
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Error al clasificar transacciones: {e}",
+            detail="Error al clasificar transacciones.",
         ) from e
 
     resultados = []
@@ -308,10 +315,13 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
     try:
         prediccion = modelo_perfil.predict(features)[0]
     except Exception as e:
-        logger.exception("Fallo al ejecutar predict() del perfil financiero")
+        logger.error(
+            "Fallo al ejecutar predict() del perfil financiero (%s)",
+            exception_type(e),
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Error al calcular el perfil financiero: {e}",
+            detail="Error al calcular el perfil financiero.",
         ) from e
 
     codificador_perfil = modelos["codificador_perfil"]
@@ -389,9 +399,9 @@ def clasificar_transaccion_endpoint(payload: TransaccionSimpleRequest):
         prediccion = modelo_gastos.predict([payload.descripcion])[0]
         return {"categoria": str(prediccion)}
     except Exception as e:
-        logger.exception("Fallo al clasificar transaccion individual")
+        logger.error("Fallo al clasificar transaccion individual (%s)", exception_type(e))
         raise HTTPException(
             status_code=500,
-            detail=f"Error al clasificar transaccion: {e}",
+            detail="Error al clasificar transaccion.",
         )
 

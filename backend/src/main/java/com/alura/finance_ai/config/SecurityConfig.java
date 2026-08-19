@@ -1,5 +1,7 @@
 package com.alura.finance_ai.config;
 
+import com.alura.finance_ai.security.ApiKeyAuthenticationFilter;
+import com.alura.finance_ai.security.RateLimitFilter;
 import com.alura.finance_ai.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +25,8 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtFilter jwtFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,7 +41,9 @@ public class SecurityConfig {
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(apiKeyAuthenticationFilter, JwtFilter.class)
+            .addFilterAfter(rateLimitFilter, ApiKeyAuthenticationFilter.class);
 
         return http.build();
     }
