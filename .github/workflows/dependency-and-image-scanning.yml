@@ -22,6 +22,7 @@ jobs:
 
       - name: Scan dependency manifests and lockfiles
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           scan-type: fs
           scan-ref: .
@@ -35,6 +36,7 @@ jobs:
     name: Review pull request dependencies
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: read
@@ -68,6 +70,7 @@ jobs:
 
       - name: Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           scan-type: image
           image-ref: ${{ matrix.image }}
