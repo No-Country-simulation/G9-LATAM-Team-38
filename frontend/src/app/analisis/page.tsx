@@ -266,8 +266,8 @@ export default function Home() {
     setGenerandoPDF(true);
     try {
       const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
       for (let i = 0; i < pageEls.length; i++) {
         const pageEl = pageEls[i];
@@ -275,7 +275,8 @@ export default function Home() {
           scale: 2,
           useCORS: true,
           backgroundColor: "#ffffff",
-          logging: false
+          logging: false,
+          windowWidth: 794
         });
 
         const imgData = canvas.toDataURL("image/png");
@@ -284,7 +285,7 @@ export default function Home() {
           pdf.addPage();
         }
 
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfPageHeight);
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       }
 
       pdf.save(`Analisis_Financiero_${username || 'MarcoArias'}.pdf`);
@@ -956,154 +957,224 @@ export default function Home() {
         </div>
       )}
 
-      {/* HIDDEN PDF TEMPLATE MULTI-PÁGINA */}
-      {resultado && (
-        <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none space-y-10">
-          {/* PÁGINA 1: Resumen, Diagnóstico y Tabla de Movimientos */}
-          <div className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans flex flex-col justify-between p-8 box-border relative overflow-hidden" style={{ width: '794px', height: '1123px', minHeight: '1123px' }}>
-            <div>
-              {/* Header (Imagen 1) */}
-              <div className="w-full bg-white pb-3 border-b-4 border-[#1e3a8a] mb-5">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
-                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
-                  </div>
-                  <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
-                    <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
-                    <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
-                    <p>ID Transacción: #{idTransaccion}</p>
-                  </div>
-                </div>
+      {/* HIDDEN PDF TEMPLATES (FLUJO CONTINUO Y PROPORCIONADO) */}
+      {resultado && (() => {
+        const desglose = resultado.desglose || [];
+        const recs = resultado.recomendaciones || [];
+
+        // Helper para renderizar el Header de cada hoja
+        const renderPDFHeader = (pageNum?: number, totalPages?: number) => (
+          <div className="w-full bg-white pb-3 border-b-4 border-[#1e3a8a] mb-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
+                <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
               </div>
-
-              {/* Body Página 1 */}
-              <div className="w-full bg-white space-y-5">
-                {/* Resumen Ejecutivo */}
-                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Resumen Ejecutivo</h2>
-                <div className="grid grid-cols-3 gap-3.5 mb-4">
-                  <div className="bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] shadow-sm">
-                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Ingresos Declarados</p>
-                    <p className="text-xl font-black text-[#1e293b]">${parseFloat(ingresoMensual).toLocaleString()}</p>
-                  </div>
-                  <div className="bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] shadow-sm">
-                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Gastos Identificados</p>
-                    <p className="text-xl font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-[#eff6ff] p-3.5 rounded-lg border border-[#bfdbfe] shadow-sm">
-                    <p className="text-[11px] text-[#2563eb] font-bold uppercase mb-1">Balance / Flujo</p>
-                    <p className="text-xl font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual) - resultado.totalGastos).toLocaleString()}</p>
-                  </div>
-                </div>
-
-                {/* Diagnóstico */}
-                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Diagnóstico Financiero</h2>
-                <div className="grid grid-cols-4 gap-3.5 mb-4">
-                  <div className="col-span-2 bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
-                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Estado de Salud</p>
-                    <p className="text-base font-bold text-[#1e293b]">{resultado.estado}</p>
-                    <p className="text-xs text-[#475569] mt-0.5">{resultado.mensaje}</p>
-                  </div>
-
-                  <div className="text-center bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Endeudamiento</p>
-                    <span className="text-2xl font-black text-[#e11d48] leading-none">{resultado.endeudamiento}%</span>
-                  </div>
-
-                  <div className="text-center bg-[#f8fafc] p-3.5 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
-                    <p className="text-[11px] text-[#64748b] font-bold uppercase mb-1">Capacidad Ahorro</p>
-                    <span className="text-xl font-black text-[#059669] leading-none">{resultado.frecuenciaAhorroText}</span>
-                  </div>
-                </div>
-
-                {/* Desglose de Gastos */}
-                <h2 className="text-base font-bold text-[#1e3a8a] mb-2.5 border-l-4 border-[#2563eb] pl-2.5">Desglose de Movimientos</h2>
-                <div className="overflow-hidden rounded-lg border border-[#e2e8f0]">
-                  <table className="w-full text-left text-xs text-[#475569]">
-                    <thead className="bg-[#f1f5f9] text-[11px] uppercase font-bold text-[#334155]">
-                      <tr>
-                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0]">Concepto</th>
-                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0] text-right">Monto</th>
-                        <th className="px-3.5 py-2.5 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#f1f5f9]">
-                      {resultado.desglose.map((item, idx) => (
-                        <tr key={idx} className="bg-[#ffffff]">
-                          <td className="px-3.5 py-2 font-medium text-[#1e293b]">{item.descripcion}</td>
-                          <td className="px-3.5 py-2 text-right font-bold">${item.monto.toLocaleString()}</td>
-                          <td className="px-3.5 py-2 text-right">
-                            <span className="bg-[#f1f5f9] text-[#475569] py-0.5 px-2 rounded-full text-[10px] font-bold">{item.porcentaje.toFixed(1)}%</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
+                <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
+                <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
+                <p>ID Transacción: #{idTransaccion}</p>
+                {totalPages && totalPages > 1 && pageNum && (
+                  <p className="text-[10px] text-[#2563eb] font-bold mt-0.5">Página {pageNum} de {totalPages}</p>
+                )}
               </div>
-            </div>
-
-            {/* Footer Página 1 (Imagen 2) */}
-            <div className="w-full bg-white relative pt-3 pb-6 box-border">
-              <div className="border-t border-[#e2e8f0] pt-3 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
-                <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1.5 text-[#64748b]">
-                  <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
-                </p>
-              </div>
-              <div className="h-4 w-[calc(100%+4rem)] bg-[#1e3a8a] absolute bottom-0 -ml-8"></div>
             </div>
           </div>
+        );
 
-          {/* PÁGINA 2: Plan de Acción / Sugerencias IA */}
-          <div className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans flex flex-col justify-between p-8 box-border relative overflow-hidden" style={{ width: '794px', height: '1123px', minHeight: '1123px' }}>
-            <div>
-              {/* Header (Imagen 1) */}
-              <div className="w-full bg-white pb-3 border-b-4 border-[#1e3a8a] mb-5">
-                <div className="flex justify-between items-end">
+        // Helper para renderizar el Footer estático en cada hoja
+        const renderPDFFooter = () => (
+          <div className="w-full bg-white relative pt-3 pb-6 box-border mt-auto">
+            <div className="border-t border-[#e2e8f0] pt-2 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
+              <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
+              <p className="flex items-center gap-1.5 text-[#64748b]">
+                <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
+              </p>
+            </div>
+            <div className="h-4 w-[calc(100%+4rem)] bg-[#1e3a8a] absolute bottom-0 -ml-8"></div>
+          </div>
+        );
+
+        // Capacidad dinámica de sugerencias en la Página 1 para llenarla al 100% sin dejar huecos
+        const recsEnPag1Count = Math.max(1, 6 - Math.max(0, Math.floor((desglose.length - 5) * 0.8)));
+        const recsPag1 = recs.slice(0, recsEnPag1Count);
+        const recsRestantes = recs.slice(recsEnPag1Count);
+
+        const esUnaSolaPagina = recsRestantes.length === 0;
+
+        // Si sobran sugerencias, se dividen en páginas de hasta 14 por hoja
+        const chunkSizePag2 = 14;
+        const chunksRestantes: string[][] = [];
+        for (let i = 0; i < recsRestantes.length; i += chunkSizePag2) {
+          chunksRestantes.push(recsRestantes.slice(i, i + chunkSizePag2));
+        }
+
+        const totalPages = esUnaSolaPagina ? 1 : 1 + chunksRestantes.length;
+
+        return (
+          <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none space-y-10">
+            {/* PÁGINA 1: Resumen, Diagnóstico, Desglose y Primeras Sugerencias (100% LLENA) */}
+            <div
+              className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans p-8 box-border flex flex-col justify-between overflow-hidden"
+              style={{ width: '794px', height: '1123px', maxHeight: '1123px', boxSizing: 'border-box' }}
+            >
+              <div>
+                {renderPDFHeader(1, totalPages)}
+
+                <div className="w-full bg-white space-y-3.5">
+                  {/* 1. Resumen Ejecutivo */}
                   <div>
-                    <h1 className="text-3xl font-extrabold text-[#1e3a8a] tracking-tight leading-none mb-1">FINANCE AI</h1>
-                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-widest">Reporte Analítico Empresarial</p>
-                  </div>
-                  <div className="text-right text-[11px] text-[#64748b] font-medium leading-tight">
-                    <p>Generado el: {new Date().toLocaleDateString('es-ES')}</p>
-                    <p>Usuario: <span className="font-bold text-[#1e293b]">{username || 'MarcoArias'}</span></p>
-                    <p>ID Transacción: #{idTransaccion}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Body Página 2 */}
-              <div className="w-full bg-white space-y-4">
-                <h2 className="text-lg font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">
-                  Plan de Acción / Sugerencias IA
-                </h2>
-                <div className="space-y-3">
-                  {resultado.recomendaciones.map((rec, index) => (
-                    <div key={index} className="bg-[#eef2ff] border border-[#e0e7ff] rounded-xl p-4 flex items-start gap-3 shadow-xs">
-                      <span className="bg-[#4338ca] text-white font-black text-xs px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">
-                        {index + 1}
-                      </span>
-                      <p className="text-[#1e1b4b] text-sm font-medium leading-relaxed">{rec}</p>
+                    <h2 className="text-sm font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2">Resumen Ejecutivo</h2>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-[#f8fafc] p-2.5 rounded-lg border border-[#e2e8f0]">
+                        <p className="text-[10px] text-[#64748b] font-bold uppercase mb-0.5">Ingresos Declarados</p>
+                        <p className="text-lg font-black text-[#1e293b]">${parseFloat(ingresoMensual || "0").toLocaleString()}</p>
+                      </div>
+                      <div className="bg-[#f8fafc] p-2.5 rounded-lg border border-[#e2e8f0]">
+                        <p className="text-[10px] text-[#64748b] font-bold uppercase mb-0.5">Gastos Identificados</p>
+                        <p className="text-lg font-black text-[#1e293b]">${resultado.totalGastos.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-[#eff6ff] p-2.5 rounded-lg border border-[#bfdbfe]">
+                        <p className="text-[10px] text-[#2563eb] font-bold uppercase mb-0.5">Balance / Flujo</p>
+                        <p className="text-lg font-black text-[#1e3a8a]">${(parseFloat(ingresoMensual || "0") - resultado.totalGastos).toLocaleString()}</p>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* 2. Diagnóstico Financiero */}
+                  <div>
+                    <h2 className="text-sm font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2">Diagnóstico Financiero</h2>
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="col-span-2 bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col justify-center">
+                        <p className="text-[10px] text-[#64748b] font-bold uppercase mb-0.5">Estado de Salud</p>
+                        <p className="text-sm font-bold text-[#1e293b] leading-tight">{resultado.estado}</p>
+                        <p className="text-[10.5px] text-[#475569] mt-1 leading-normal">{resultado.mensaje}</p>
+                      </div>
+
+                      <div className="text-center bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                        <p className="text-[10px] text-[#64748b] font-bold uppercase mb-0.5">Endeudamiento</p>
+                        <span className="text-xl font-black text-[#e11d48] leading-tight">{resultado.endeudamiento}%</span>
+                      </div>
+
+                      <div className="text-center bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0] flex flex-col items-center justify-center">
+                        <p className="text-[10px] text-[#64748b] font-bold uppercase mb-0.5">Capacidad Ahorro</p>
+                        <span className="text-lg font-black text-[#059669] leading-tight">{resultado.frecuenciaAhorroText}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Desglose de Movimientos */}
+                  <div>
+                    <h2 className="text-sm font-bold text-[#1e3a8a] mb-1.5 border-l-4 border-[#2563eb] pl-2">Desglose de Movimientos</h2>
+                    <div className="overflow-hidden rounded-lg border border-[#e2e8f0]">
+                      <table className="w-full text-left text-xs text-[#475569]">
+                        <thead className="bg-[#f1f5f9] text-[10px] uppercase font-bold text-[#334155]">
+                          <tr>
+                            <th className="px-3 py-1.5 border-b border-[#e2e8f0]">Concepto</th>
+                            <th className="px-3 py-1.5 border-b border-[#e2e8f0] text-right">Monto</th>
+                            <th className="px-3 py-1.5 border-b border-[#e2e8f0] text-right">Impacto (%)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#f1f5f9]">
+                          {desglose.map((item, idx) => (
+                            <tr key={idx} className="bg-[#ffffff]">
+                              <td className="px-3 py-1.5 font-medium text-[#1e293b]">{item.descripcion}</td>
+                              <td className="px-3 py-1.5 text-right font-bold">${item.monto.toLocaleString()}</td>
+                              <td className="px-3 py-1.5 text-right font-bold text-[#475569] text-xs">
+                                {item.porcentaje.toFixed(1)}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 4. Plan de Acción / Sugerencias IA (Inicia en Página 1 sin dejar huecos) */}
+                  <div>
+                    <h2 className="text-sm font-bold text-[#1e3a8a] mb-2 border-l-4 border-[#2563eb] pl-2">
+                      Plan de Acción / Sugerencias IA {!esUnaSolaPagina ? `(Puntos 1 al ${recsPag1.length})` : ''}
+                    </h2>
+                    <div className="space-y-2">
+                      {recsPag1.map((rec, index) => (
+                        <div
+                          key={index}
+                          className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg px-3 py-2 flex items-start gap-2.5 shadow-xs"
+                        >
+                          <span className="text-[#1e3a8a] font-black text-sm shrink-0 min-w-[20px]">
+                            {index + 1}.
+                          </span>
+                          <p className="text-[#1e1b4b] text-xs font-medium leading-relaxed flex-1">
+                            {rec}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {renderPDFFooter()}
             </div>
 
-            {/* Footer Página 2 (Imagen 2) */}
-            <div className="w-full bg-white relative pt-3 pb-6 box-border">
-              <div className="border-t border-[#e2e8f0] pt-3 flex justify-between items-center text-[11px] text-[#94a3b8] font-medium mb-3">
-                <p>Documento hecho con cariño para ayudarte a mejorar tus finanzas.</p>
-                <p className="flex items-center gap-1.5 text-[#64748b]">
-                  <Sparkles size={12} className="text-[#3b82f6]" /> G9 LATAM Team 38
-                </p>
-              </div>
-              <div className="h-4 w-[calc(100%+4rem)] bg-[#1e3a8a] absolute bottom-0 -ml-8"></div>
-            </div>
+            {/* PÁGINAS 2+: Continuación de Sugerencias IA (Llenas y bien estructuradas) */}
+            {chunksRestantes.map((chunk, chunkIdx) => {
+              const pageNumber = 2 + chunkIdx;
+              const startIndex = recsPag1.length + chunkIdx * chunkSizePag2;
+
+              return (
+                <div
+                  key={chunkIdx}
+                  className="pdf-page bg-[#ffffff] text-[#0f172a] font-sans p-8 box-border flex flex-col justify-between overflow-hidden"
+                  style={{ width: '794px', height: '1123px', maxHeight: '1123px', boxSizing: 'border-box' }}
+                >
+                  <div>
+                    {renderPDFHeader(pageNumber, totalPages)}
+
+                    <div className="w-full bg-white space-y-3.5">
+                      <h2 className="text-base font-bold text-[#1e3a8a] mb-3 border-l-4 border-[#2563eb] pl-3">
+                        Plan de Acción / Sugerencias IA (Continuación)
+                      </h2>
+                      <div className="space-y-2.5">
+                        {chunk.map((rec, index) => (
+                          <div
+                            key={index}
+                            className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg px-3.5 py-2.5 flex items-start gap-3 shadow-xs"
+                          >
+                            <span className="text-[#1e3a8a] font-black text-sm shrink-0 min-w-[24px] mt-0.5">
+                              {startIndex + index + 1}.
+                            </span>
+                            <p className="text-[#1e1b4b] text-xs font-medium leading-relaxed flex-1">
+                              {rec}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Tarjeta de Cierre Estratégico en la última hoja para equilibrar el espacio */}
+                      {pageNumber === totalPages && (
+                        <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-xl p-4 mt-6 shadow-xs">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Sparkles size={16} className="text-[#2563eb]" />
+                            <h3 className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider">
+                              Recomendación Estratégica Final
+                            </h3>
+                          </div>
+                          <p className="text-xs text-[#1e293b] leading-relaxed">
+                            Implementar estas sugerencias de forma progresiva te ayudará a controlar los gastos por categoría, reducir el endeudamiento e incrementar tu capacidad de ahorro mensual de manera sostenible.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {renderPDFFooter()}
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

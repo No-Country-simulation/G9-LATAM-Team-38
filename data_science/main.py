@@ -370,6 +370,10 @@ class TransaccionSimpleRequest(BaseSchema):
 @app.post("/clasificar-transaccion")
 def clasificar_transaccion_endpoint(payload: TransaccionSimpleRequest):
     """Endpoint para clasificar una transaccion individual."""
+    desc_lower = payload.descripcion.strip().lower()
+    if desc_lower in ["otro", "otros", "varios", "extra", "gastos varios", "sin categoria"] or desc_lower.startswith("otro"):
+        return {"categoria": "Otros"}
+
     modelo_gastos = modelos.get("clasificador_gastos")
     if modelo_gastos is None:
         raise HTTPException(
