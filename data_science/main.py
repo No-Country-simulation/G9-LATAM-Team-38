@@ -1,6 +1,8 @@
 import logging
 import hashlib
 import hmac
+import os
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as PredictionTimeoutError
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import date
@@ -44,6 +46,28 @@ modelos: dict = {}
 
 # Limite de transacciones por peticion para mitigar payloads excesivos
 MAX_TRANSACCIONES_POR_REQUEST = 200
+PREDICTION_TIMEOUT_SECONDS = float(os.getenv("PREDICTION_TIMEOUT_SECONDS", "10"))
+MAX_CONCURRENT_PREDICTIONS = int(os.getenv("MAX_CONCURRENT_PREDICTIONS", "4"))
+PREDICTION_EXECUTOR = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PREDICTIONS)
+
+
+def _ejecutar_prediccion(modelo: Any, features: Any) -> Any:
+    """Ejecuta predict() con limite de concurrencia y tiempo.
+
+    El timeout evita que una solicitud quede esperando indefinidamente si el
+    modelo se cuelga. El executor tambien impide que una rafaga de
+    solicitudes cree un thread por cada inferencia y consuma memoria sin
+    limite.
+    """
+    future = PREDICTION_EXECUTOR.submit(modelo.predict, features)
+    try:
+        return future.result(timeout=PREDICTION_TIMEOUT_SECONDS)
+    except PredictionTimeoutError as e:
+        future.cancel()
+        raise HTTPException(
+            status_code=504,
+            detail=f"La prediccion excedio el limite de {PREDICTION_TIMEOUT_SECONDS:g} segundos.",
+        ) from e
 
 
 def cargar_modelo(path: Path):
@@ -266,7 +290,9 @@ def clasificar_transacciones(transacciones: List[Transaccion]) -> List[Transacci
 
     descripciones = [tx.descripcion for tx in transacciones]
     try:
-        predicciones = modelo_gastos.predict(descripciones)
+        predicciones = _ejecutar_prediccion(modelo_gastos, descripciones)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(
             "Fallo al ejecutar predict() del clasificador de gastos (%s)",
@@ -313,7 +339,9 @@ def calcular_perfil(payload: TransaccionesRequest) -> PerfilResponse:
     # forman parte de las features del modelo.
     features = [[ingreso, nivel_endeudamiento]]
     try:
-        prediccion = modelo_perfil.predict(features)[0]
+        prediccion = _ejecutar_prediccion(modelo_perfil, features)[0]
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(
             "Fallo al ejecutar predict() del perfil financiero (%s)",
@@ -396,8 +424,10 @@ def clasificar_transaccion_endpoint(payload: TransaccionSimpleRequest):
             detail="El modelo clasificador de gastos no expone metodo predict().",
         )
     try:
-        prediccion = modelo_gastos.predict([payload.descripcion])[0]
+        prediccion = _ejecutar_prediccion(modelo_gastos, [payload.descripcion])[0]
         return {"categoria": str(prediccion)}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Fallo al clasificar transaccion individual (%s)", exception_type(e))
         raise HTTPException(

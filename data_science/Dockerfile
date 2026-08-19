@@ -45,5 +45,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
 
-# Uvicorn sirviendo la app FastAPI definida en main.py
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Un solo worker mantiene acotada la memoria de los modelos cargados en RAM;
+# los limites de concurrencia/requests evitan que una instancia colgada por
+# el timeout del backend (servicio.ia.read-timeout-ms) acumule conexiones.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--limit-concurrency", "32", "--limit-max-requests", "1000"]
