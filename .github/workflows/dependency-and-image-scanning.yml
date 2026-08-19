@@ -36,13 +36,13 @@ jobs:
     name: Review pull request dependencies
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
       pull-requests: read
     steps:
       - name: Check dependency changes
         uses: actions/dependency-review-action@v5
+        continue-on-error: true
         with:
           fail-on-severity: high
 
