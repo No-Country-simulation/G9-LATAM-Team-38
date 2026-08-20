@@ -28,14 +28,15 @@ WORKDIR /app
 RUN addgroup --system spring && adduser --system --ingroup spring spring
 USER spring:spring
 
-# Copiamos únicamente el jar generado en la etapa de build
-COPY --from=build /app/target/*.jar app.jar
+# Copiamos únicamente el jar generado en la etapa de build y asignamos su
+# propiedad al usuario de runtime.
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 
 # Puerto expuesto por el backend Spring Boot
 EXPOSE 8080
 
 # Variables de entorno configurables en tiempo de despliegue (ej. perfil activo)
-ENV JAVA_OPTS=""
+ENV JAVA_TOOL_OPTIONS=""
 ENV SPRING_PROFILES_ACTIVE="prod"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

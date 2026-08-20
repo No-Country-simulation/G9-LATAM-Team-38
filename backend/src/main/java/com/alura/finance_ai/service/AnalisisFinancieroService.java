@@ -5,12 +5,14 @@ import com.alura.finance_ai.dto.TransaccionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +35,16 @@ public class AnalisisFinancieroService {
         };
     }
 
-    public AnalisisFinancieroService(@Value("${servicio.ia.url:http://localhost:8000}") String servicioIaUrl) {
+    public AnalisisFinancieroService(
+            @Value("${servicio.ia.url:http://localhost:8000}") String servicioIaUrl,
+            @Value("${servicio.ia.connect-timeout-ms:2000}") int connectTimeoutMs,
+            @Value("${servicio.ia.read-timeout-ms:12000}") int readTimeoutMs) {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofMillis(connectTimeoutMs));
+        requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
         this.restClient = RestClient.builder()
                 .baseUrl(servicioIaUrl)
+                .requestFactory(requestFactory)
                 .build();
     }
 
