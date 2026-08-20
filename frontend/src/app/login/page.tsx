@@ -99,10 +99,14 @@ export default function LoginPage() {
       );
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Usuario o contraseña incorrectos");
+        }
+        if (response.status === 409) {
+          throw new Error("Ese usuario ya existe. Intenta iniciar sesión.");
+        }
         throw new Error(
-          isLogin
-            ? "Usuario o contraseña incorrectos"
-            : "Error al registrarse. El usuario podría ya existir."
+          "El servidor no está disponible en este momento. Intenta de nuevo en unos minutos."
         );
       }
 
