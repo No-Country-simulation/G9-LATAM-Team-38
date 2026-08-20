@@ -59,6 +59,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(respuesta);
     }
 
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> manejarUsuarioExistente(UserAlreadyExistsException exception) {
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("timestamp", LocalDateTime.now());
+        respuesta.put("error", "Conflicto");
+        respuesta.put("mensaje", "El usuario ya existe.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(respuesta);
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> manejarErrorAutenticacion(AuthenticationException exception) {
         Map<String, Object> respuesta = new HashMap<>();
