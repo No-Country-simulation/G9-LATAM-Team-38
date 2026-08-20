@@ -24,21 +24,6 @@ services:
       start_period: 15s
     restart: unless-stopped
 
-  # Base de Datos MySQL
-  db:
-    image: mysql:8.0
-    container_name: financeai-db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: hackathon_finance_ai
-    ports:
-      - "3306:3306"
-    networks:
-      - financeai-network
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: unless-stopped
-
   # Backend Java/Spring Boot — expone la API pública en el puerto 8080
   backend:
     build:
@@ -48,16 +33,15 @@ services:
     env_file:
       - .env
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://financeai-db:3306/hackathon_finance_ai?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://host.docker.internal:3306/hackathon_finance_ai?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-root}
       - SERVICIO_IA_URL=http://financeai-data-science:8000
     ports:
       - "8080:8080"
     networks:
       - financeai-network
     depends_on:
-      - db
       - data-science
     restart: unless-stopped
 
@@ -78,5 +62,3 @@ services:
       - backend
     restart: unless-stopped
 
-volumes:
-  mysql_data:
