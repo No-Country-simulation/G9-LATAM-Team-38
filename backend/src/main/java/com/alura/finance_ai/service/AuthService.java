@@ -4,6 +4,7 @@ import com.alura.finance_ai.config.JwtUtil;
 import com.alura.finance_ai.dto.AuthRequest;
 import com.alura.finance_ai.dto.AuthResponse;
 import com.alura.finance_ai.dto.RegisterRequest;
+import com.alura.finance_ai.exception.UserAlreadyExistsException;
 import com.alura.finance_ai.model.Role;
 import com.alura.finance_ai.model.UserEntity;
 import com.alura.finance_ai.repository.UserRepository;
@@ -25,7 +26,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("El usuario ya existe");
+            throw new UserAlreadyExistsException("El usuario ya existe");
         }
 
         Role assignedRole = Role.USER;
