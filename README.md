@@ -1,4 +1,4 @@
-# 🤖 Finance IA - Equipo #38 Dinamita
+# 🤖 Finance IA - Equipo #38 Babel
 
 [![NoCountry](https://img.shields.io/badge/NoCountry-Hackathon-1E3A8A?style=for-the-badge)](#) [![Alura Latam](https://img.shields.io/badge/Alura_Latam-0052CC?style=for-the-badge)](#) [![MVP](https://img.shields.io/badge/MVP-Snapshot_0.0.1-F59E0B?style=for-the-badge)](#)
 
@@ -9,8 +9,7 @@
 ## 🌐 Demo en Vivo
 
 ¡Te invitamos a probar Finance IA! El proyecto se encuentra desplegado y funcionando en el siguiente enlace:
-👉 **[Enlace al proyecto en Vercel - PRÓXIMAMENTE]** *(Reemplazar con el link cuando esté listo)*
-
+👉 **[Enlace al proyecto](https://bit.ly/FinanceAI38)**
 ---
 
 ## 🚀 Sobre el Proyecto
@@ -130,4 +129,4 @@ Este software se proporciona sin garantías de ningún tipo, expresas o implíci
 
 ---
 
-*Hecho con dedicación y cariño por el Equipo Dinamita.*
+*Hecho con dedicación y cariño por el Equipo Babel.*
