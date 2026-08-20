@@ -3,6 +3,7 @@ package com.alura.finance_ai.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,6 +57,15 @@ public class GlobalExceptionHandler {
         respuesta.put("error", "Metodo no Permitido");
         respuesta.put("mensaje", "El metodo " + exception.getMethod() + " no es valido en este endpoint.");
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(respuesta);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> manejarErrorAutenticacion(AuthenticationException exception) {
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("timestamp", LocalDateTime.now());
+        respuesta.put("error", "No Autorizado");
+        respuesta.put("mensaje", "Usuario o contraseña incorrectos.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(respuesta);
     }
 
     @ExceptionHandler(Exception.class)
