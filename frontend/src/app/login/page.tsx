@@ -313,7 +313,7 @@ export default function LoginPage() {
                 size={24}
               />
 
-              Equipo Dinamita
+              Equipo Babel
             </h2>
 
             <p className="text-[var(--brand-muted)] text-sm md:text-base leading-relaxed">

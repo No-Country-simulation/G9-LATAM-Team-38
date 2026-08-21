@@ -24,7 +24,7 @@ A través de un ecosistema robusto de microservicios, la plataforma evalúa ingr
 
 * 📊 **Análisis de Perfil Financiero:** Evaluación automatizada del estado del usuario (*Saludable, En observación, En riesgo*) impulsada por modelos de Machine Learning entrenados con datos reales.
 * 🏷️ **Clasificación Inteligente de Gastos:** Categorización automática de transacciones (Alimentación, Transporte, Salud, Vivienda, Educación, Ocio y Servicios) mediante modelos entrenados y algoritmos.
-* 💡 **Motor de Recomendaciones (Finance-Dinamita):** Alertas preventivas automáticas por sobreendeudamiento y estrategias personalizadas para la optimización de la frecuencia de ahorro.
+* 💡 **Motor de Recomendaciones (Finance-Babel):** Alertas preventivas automáticas por sobreendeudamiento y estrategias personalizadas para la optimización de la frecuencia de ahorro.
 * 📑 **Reportes Ejecutivos:** Generación y exportación dinámica de informes en formato PDF con desgloses detallados y planes de acción claros.
 * 🔐 **Seguridad y Control:** Panel de administración y sistema de acceso seguro respaldado por validaciones estrictas y protección de rutas.
 * 🌓 **Experiencia de Usuario (UX/UI):** Dashboard interactivo 100% responsive, desarrollado con soporte para Modo Claro/Oscuro.
@@ -60,7 +60,7 @@ Para mayor transparencia sobre nuestro proceso de Data Science, dejamos a dispos
 
 ---
 
-## 👥 Equipo Dinamita (G9 LATAM Team 38)
+## 👥 Equipo Babel (G9 LATAM Team 38)
 
 El talento, la disciplina y la ingeniería detrás del código:
 
