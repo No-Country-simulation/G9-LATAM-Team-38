@@ -10,7 +10,7 @@ export function GlobalFooter({ children }: GlobalFooterProps) {
       <div className="flex items-center gap-1.5 mb-2 sm:mb-0">
         <span className="text-[var(--brand-muted)]">Hecho con</span>
         <Heart size={13} className="text-red-400 fill-red-400/20" />
-        <span className="text-[var(--brand-muted)]">por Equipo Dinamita</span>
+        <span className="text-[var(--brand-muted)]">por Equipo Babel</span>
       </div>
       <div className="flex items-center gap-4">
         {children}

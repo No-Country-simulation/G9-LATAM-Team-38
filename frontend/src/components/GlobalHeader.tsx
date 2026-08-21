@@ -76,7 +76,7 @@ export function GlobalHeader({ username, onLogout, isAdmin }: GlobalHeaderProps)
           </div>
         ) : (
           <div className="bg-[var(--brand-accent)] text-[var(--brand-bg)] text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hidden sm:block">
-            #38 Dinamita
+            #38 Babel
           </div>
         )}
       </div>
