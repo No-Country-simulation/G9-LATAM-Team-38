@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -172,7 +174,7 @@ public class AnalisisFinancieroService {
                 }
             }
             return rawJson;
-        } catch (Exception e) {
+        } catch (RestClientException | JsonProcessingException e) {
             logger.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
             if (payload instanceof AnalisisRequest req) {
                 int puntaje = calcularPuntaje(req);
@@ -206,7 +208,7 @@ public class AnalisisFinancieroService {
                 }
             }
             return "Otros";
-        } catch (Exception e) {
+        } catch (RestClientException | JsonProcessingException e) {
             logger.warn("No se pudo clasificar la transaccion con FastAPI, usando fallback: " + e.getMessage());
             return simularClasificacion(transaccion.descripcion());
         }
