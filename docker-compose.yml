@@ -5,6 +5,7 @@ networks:
 services:
 
   # Microservicio Python (FastAPI) — Modelo 1 + Modelo 2, puerto 8000
+  # Sin "ports": solo alcanzable desde financeai-network (backend), no desde el host.
   data-science:
     build:
       context: ./data_science
@@ -14,8 +15,8 @@ services:
       - .env
     networks:
       - financeai-network
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
