@@ -211,7 +211,7 @@ public class AnalisisFinancieroService {
 
             return rawJson;
         } catch (RestClientException | JsonProcessingException e) {
-            logger.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
+            log.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
             if (payload instanceof AnalisisRequest req) {
                 int puntaje = calcularPuntaje(req);
                 return (puntaje >= 80) ? "FINANZAS_SANAS" : (puntaje >= 50) ? "EN_OBSERVACION" : "EN_RIESGO";
