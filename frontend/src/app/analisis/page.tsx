@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { sanitizeInput, TransaccionSecuritySchema } from "@/lib/security";
 import { API_BASE_URL } from "@/config/api";
-import { GlobalHeader } from "@/components/GlobalHeader";
+import { GlobalHeader, DemoProfile } from "@/components/GlobalHeader";
 import { GlobalFooter } from "@/components/GlobalFooter";
 import { useTheme } from "@/components/ThemeProvider";
 import html2canvas from "html2canvas";
@@ -123,6 +123,30 @@ export default function Home() {
     localStorage.removeItem("finance_active_state");
     setUsername(null);
     window.location.href = "/login";
+  };
+
+  const cargarPerfilDemo = (perfil: DemoProfile) => {
+    setIngresoMensual(perfil.ingreso_mensual.toString());
+
+    // Los perfiles Demo proporcionan directamente
+    // el nivel de endeudamiento y la frecuencia de ahorro.
+    setModoIngresoDatos("manual");
+    setEndeudamientoManual(perfil.nivel_endeudamiento.toString());
+    setFrecuenciaAhorroManual(perfil.frecuencia_ahorro);
+
+    const nuevasTransacciones: Transaccion[] =
+      perfil.transacciones.map((transaccion, index) => ({
+        id: `demo-${perfil.id}-${index}-${Date.now()}`,
+        descripcion: transaccion.descripcion,
+        monto: transaccion.monto.toString(),
+      }));
+
+    setTransacciones(nuevasTransacciones);
+
+    // Evitar mostrar el resultado del perfil anterior.
+    setResultado(null);
+    setMensajeAdvertencia(null);
+    setCargando(false);
   };
 
   useEffect(() => {
@@ -510,7 +534,12 @@ export default function Home() {
   return (
     <div className="h-screen w-screen bg-[var(--brand-bg)] text-[var(--brand-text)] font-sans flex flex-col justify-between selection:bg-[var(--brand-accent)]/30 px-4 py-2 relative overflow-hidden transition-colors duration-300">
 
-      <GlobalHeader username={username || ""} onLogout={handleLogout} isAdmin={isAdmin} />
+      <GlobalHeader
+        username={username || ""}
+        onLogout={handleLogout}
+        isAdmin={isAdmin}
+        onSelectDemoProfile={cargarPerfilDemo}
+      />
 
       {/* CONTENEDOR CENTRAL */}
       <div className="w-full max-w-7xl mx-auto my-1 flex-1 flex flex-col justify-center min-h-0">

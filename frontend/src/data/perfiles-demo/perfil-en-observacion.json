@@ -1,0 +1,23 @@
+{
+  "id": "perfil-en-observacion",
+  "nombre": "Laura",
+  "titulo": "En Observación",
+  "historia": "Laura gana 20,000 y llega a fin de mes, pero siente que el dinero desaparece. Quiere entender hacia dónde se dirige su capital.",
+  "ingreso_mensual": 20000,
+  "nivel_endeudamiento": 55,
+  "frecuencia_ahorro": "Media",
+  "transacciones": [
+    {
+      "descripcion": "Pago de renta",
+      "monto": 6000
+    },
+    {
+      "descripcion": "Supermercado",
+      "monto": 3000
+    },
+    {
+      "descripcion": "Gasolina y transporte",
+      "monto": 2000
+    }
+  ]
+}
