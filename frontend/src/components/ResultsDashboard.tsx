@@ -62,7 +62,7 @@ export default function ResultsDashboard({ data, onReset }: ResultsDashboardProp
                 {/* Recomendaciones */}
                 <div>
                     <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-                        <span>💡</span> Finance-Dinamita
+                        <span>💡</span> Finance-Babel
                     </h3>
                     <ul className="space-y-4">
                         {data.recomendaciones.map((rec, idx) => {

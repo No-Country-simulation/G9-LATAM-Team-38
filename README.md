@@ -24,7 +24,7 @@ A través de un ecosistema robusto de microservicios, la plataforma evalúa ingr
 
 * 📊 **Análisis de Perfil Financiero:** Evaluación automatizada del estado del usuario (*Saludable, En observación, En riesgo*) impulsada por modelos de Machine Learning entrenados con datos reales.
 * 🏷️ **Clasificación Inteligente de Gastos:** Categorización automática de transacciones (Alimentación, Transporte, Salud, Vivienda, Educación, Ocio y Servicios) mediante modelos entrenados y algoritmos.
-* 💡 **Motor de Recomendaciones (Finance-Dinamita):** Alertas preventivas automáticas por sobreendeudamiento y estrategias personalizadas para la optimización de la frecuencia de ahorro.
+* 💡 **Motor de Recomendaciones (Finance-Babel):** Alertas preventivas automáticas por sobreendeudamiento y estrategias personalizadas para la optimización de la frecuencia de ahorro.
 * 📑 **Reportes Ejecutivos:** Generación y exportación dinámica de informes en formato PDF con desgloses detallados y planes de acción claros.
 * 🔐 **Seguridad y Control:** Panel de administración y sistema de acceso seguro respaldado por validaciones estrictas y protección de rutas.
 * 🌓 **Experiencia de Usuario (UX/UI):** Dashboard interactivo 100% responsive, desarrollado con soporte para Modo Claro/Oscuro.
@@ -35,10 +35,10 @@ A través de un ecosistema robusto de microservicios, la plataforma evalúa ingr
 
 | Área | Tecnologías Principales |
 | :--- | :--- |
-| **Frontend (UI/UX)** | Next.js (App Router), TypeScript, Tailwind CSS, Vercel |
-| **Backend (API REST)**| Java 21, Spring Boot 4.1.0, MySQL 8.0.40, JWT, Swagger |
-| **Data Science (IA)** | Python 3.11, FastAPI, Scikit-Learn, Pandas, NumPy |
-| **Infraestructura** | Oracle Cloud Infrastructure (OCI), Docker |
+| **Frontend (UI/UX)** | Next.js (App Router), TypeScript, Tailwind CSS, jsPDF, html2canvas, Vercel |
+| **Backend (API REST)**| Java 21, Spring Boot 4.1.0, MySQL 8.0.40, JWT, Swagger / OpenAPI |
+| **Data Science (IA)** | Python 3.11, FastAPI, Scikit-Learn (`clasificador_gastos.pkl`, `perfil_financiero.pkl`), Pandas, NumPy |
+| **Infraestructura** | Oracle Cloud Infrastructure (OCI), Docker, Docker Compose |
 
 ### 🏗️ Arquitectura y Despliegue en la Nube
 
@@ -48,7 +48,9 @@ El proyecto está fundamentado en una arquitectura de microservicios orientada a
 * **Contenedorización:** Utilizamos **Docker** como solución de contenedorización para empaquetar los entornos, aislar las dependencias y asegurar la consistencia del despliegue entre el equipo.
 * **Cloud Hosting:** La infraestructura se aloja en una instancia Compute de **Oracle Cloud Infrastructure (OCI)**, aprovechando OCI Object Storage para el resguardo del dataset y los modelos de IA entrenados (`.pkl`).
 
-📄 Detalle completo (diagrama y explicación de cómo interactúan Java, Python, OCI Compute y OCI Object Storage): **[arquitectura.md](./arquitectura.md)**
+📄 **Documentación Técnica Adicional:**
+* Diagrama e interacción de infraestructura: **[arquitectura.md](./arquitectura.md)**
+* Especificación de reglas de negocio, modelos de ML y fallback: **[reglas_de_negocio.md](./reglas_de_negocio.md)**
 
 ---
 
@@ -60,7 +62,7 @@ Para mayor transparencia sobre nuestro proceso de Data Science, dejamos a dispos
 
 ---
 
-## 👥 Equipo Dinamita (G9 LATAM Team 38)
+## 👥 Equipo Babel (G9 LATAM Team 38)
 
 El talento, la disciplina y la ingeniería detrás del código:
 
