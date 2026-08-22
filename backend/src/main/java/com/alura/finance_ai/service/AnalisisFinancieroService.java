@@ -11,6 +11,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.text.Normalizer;
 import java.time.Duration;
@@ -203,9 +208,10 @@ public class AnalisisFinancieroService {
                 }
                 return rawJson;
             }
-            return PerfilFinanciero.DESCONOCIDO.name();
-        } catch (Exception e) {
-            log.error("Fallo al consultar el servicio de predicción interna", e);
+
+            return rawJson;
+        } catch (RestClientException | JsonProcessingException e) {
+            logger.error("Se cayo la conexion con Python en /prediccion-interna: " + e.getMessage());
             if (payload instanceof AnalisisRequest req) {
                 int puntaje = calcularPuntaje(req);
                 return (puntaje >= 80) ? "FINANZAS_SANAS" : (puntaje >= 50) ? "EN_OBSERVACION" : "EN_RIESGO";
@@ -238,7 +244,7 @@ public class AnalisisFinancieroService {
                 }
             }
             return simularClasificacion(transaccion.descripcion());
-        } catch (Exception e) {
+        } catch (RestClientException | JsonProcessingException e) {
             log.warn("Servicio de IA no disponible, usando clasificación de respaldo por palabras clave", e);
             return simularClasificacion(transaccion.descripcion());
         }
