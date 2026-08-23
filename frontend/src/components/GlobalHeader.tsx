@@ -187,7 +187,7 @@ export function GlobalHeader({
 
                       <div>
                         <p className="text-xs font-bold text-[var(--brand-text)]">
-                          Carlos — En Riesgo
+                          Carlos
                         </p>
 
                         <p className="text-[10px] text-[var(--brand-muted)] mt-1">
@@ -219,7 +219,7 @@ export function GlobalHeader({
 
                       <div>
                         <p className="text-xs font-bold text-[var(--brand-text)]">
-                          Laura — En Observación
+                          Laura
                         </p>
 
                         <p className="text-[10px] text-[var(--brand-muted)] mt-1">
@@ -251,7 +251,7 @@ export function GlobalHeader({
 
                       <div>
                         <p className="text-xs font-bold text-[var(--brand-text)]">
-                          Roberto — Finanzas Sanas
+                          Roberto
                         </p>
 
                         <p className="text-[10px] text-[var(--brand-muted)] mt-1">
