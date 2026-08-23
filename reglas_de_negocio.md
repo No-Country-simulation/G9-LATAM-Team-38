@@ -114,10 +114,9 @@ $$S_{\text{salud}} = P_{\text{ahorro}} + P_{\text{endeudamiento}} + P_{\text{dis
 ```mermaid
 graph LR
     Score["S_salud (0 a 100)"]
-    Score -->|80 - 100 pts| Exc["🟢 Excelente (Riesgo Muy Bajo)"]
-    Score -->|50 - 79 pts| Est["🔵 Estable (Riesgo Bajo/Moderado)"]
-    Score -->|30 - 49 pts| Rie["🟠 En Riesgo (Riesgo Alto)"]
-    Score -->|0 - 29 pts| Cri["🔴 Crítico (Alarma Financiera)"]
+    Score -->|80 - 100 pts| San["🟢 Finanzas Sanas (Riesgo Muy Bajo)"]
+    Score -->|50 - 79 pts| Obs["🟡 En Observación (Riesgo Moderado)"]
+    Score -->|0 - 49 pts| Rie["🔴 En Riesgo (Riesgo Alto)"]
 ```
 
 ---
