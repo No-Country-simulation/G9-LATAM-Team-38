@@ -8,16 +8,24 @@
   "frecuencia_ahorro": "Baja",
   "transacciones": [
     {
-      "descripcion": "Pago de tarjeta de crédito",
-      "monto": 3500
+      "descripcion": "Pago de renta departamento",
+      "monto": 3000
     },
     {
-      "descripcion": "Comida rápida (Uber Eats)",
-      "monto": 2500
+      "descripcion": "Supermercado y comida rápida",
+      "monto": 2000
     },
     {
-      "descripcion": "Videojuegos y Streaming",
-      "monto": 1500
+      "descripcion": "Videojuegos y streaming",
+      "monto": 1200
+    },
+    {
+      "descripcion": "Gasolina y Uber",
+      "monto": 800
+    },
+    {
+      "descripcion": "Recibo de luz y wifi",
+      "monto": 500
     }
   ]
 }

@@ -227,7 +227,7 @@ export function GlobalHeader({
                         </p>
 
                         <p className="text-[10px] text-[var(--brand-muted)]">
-                          Endeudamiento: 55%
+                          Endeudamiento: 35%
                         </p>
 
                         <p className="text-[10px] text-[var(--brand-muted)]">

@@ -8,16 +8,36 @@
   "frecuencia_ahorro": "Alta",
   "transacciones": [
     {
-      "descripcion": "Mantenimiento departamento",
-      "monto": 3000
+      "descripcion": "Pago de renta y mantenimiento",
+      "monto": 1800
     },
     {
-      "descripcion": "Despensa saludable",
-      "monto": 2000
+      "descripcion": "Despensa y supermercado",
+      "monto": 1400
     },
     {
-      "descripcion": "Gimnasio",
-      "monto": 1000
+      "descripcion": "Gasolina auto",
+      "monto": 800
+    },
+    {
+      "descripcion": "Servicio luz y agua",
+      "monto": 600
+    },
+    {
+      "descripcion": "Farmacia y seguro médico",
+      "monto": 500
+    },
+    {
+      "descripcion": "Colegiatura y libros",
+      "monto": 400
+    },
+    {
+      "descripcion": "Cine y entretenimiento",
+      "monto": 300
+    },
+    {
+      "descripcion": "Gastos varios y misceláneos",
+      "monto": 200
     }
   ]
 }
