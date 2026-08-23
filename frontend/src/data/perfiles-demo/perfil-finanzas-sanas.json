@@ -1,0 +1,23 @@
+{
+  "id": "perfil-finanzas-sanas",
+  "nombre": "Roberto",
+  "titulo": "Finanzas Sanas",
+  "historia": "Roberto gana 30,000, tiene sus deudas muy controladas y ahorra constantemente. Busca optimizar su salud financiera.",
+  "ingreso_mensual": 30000,
+  "nivel_endeudamiento": 20,
+  "frecuencia_ahorro": "Alta",
+  "transacciones": [
+    {
+      "descripcion": "Mantenimiento departamento",
+      "monto": 3000
+    },
+    {
+      "descripcion": "Despensa saludable",
+      "monto": 2000
+    },
+    {
+      "descripcion": "Gimnasio",
+      "monto": 1000
+    }
+  ]
+}
